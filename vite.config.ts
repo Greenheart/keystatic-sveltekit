@@ -6,6 +6,8 @@ export default defineConfig({
   server: {
     // Use specific host to make it work with the Keystatic frontend
     // TODO: See if there is a way to force keystatic to use the same host as the main vite server
+    // NOTE: Related issue: https://github.com/Thinkmill/keystatic/issues/366
+    // This might be possible to remove in a preprocessing step or by patching Keystatic
     host: '127.0.0.1',
     fs: {
       allow: ['./keystatic.config.ts'],
