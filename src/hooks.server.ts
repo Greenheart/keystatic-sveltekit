@@ -1,22 +1,67 @@
+// import { render } from 'svelte/server'
 import type { Handle } from '@sveltejs/kit'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 
+// import { Keystatic } from '@keystatic/core/ui'
+// import { type Config } from '@keystatic/core'
+// import { sveltify } from 'svelte-preprocess-react'
+// import { renderToString } from 'react-dom/server'
+// import { createPortal } from 'react-dom'
+// import ReactDOM from 'react-dom/client'
+
+// import KeystaticUI from '$lib/components/Keystatic.svelte'
 import config from '../keystatic.config'
 
 const handleKeystatic = makeGenericAPIRouteHandler({ config })
 
+const isKeystaticAPIPath = /^\/api\/keystatic/
+const isKeystaticUIPath = /^\/keystatic/
+
+// function renderKeystaticUI() {
+//   const keystatic = render(KeystaticUI)
+//   const body = `<!doctype html>
+// <html lang="en">
+//   <head>
+//     <meta charset="utf-8" />
+//     <meta name="viewport" content="width=device-width, initial-scale=1" />
+//     ${keystatic.head}
+//   </head>
+//   <body>
+//     <div id="root">${keystatic.body}</div>
+//   </body>
+// </html>`
+
+//   return new Response(body, { headers: { 'Content-Type': 'text/html' } })
+// }
+
+// One benefit of prerendering Keystatic would be to build the UI as a static Vite SPA and serve it purely as static assets
+// However by using the SSR, it would be easy to keep it updated and in sync with the latest version of Keystatic
 export const handle: Handle = async ({ event, resolve }) => {
-  if (event.url.pathname.startsWith('/api/keystatic')) {
-    const { body, headers, status, statusText } = await handleKeystatic(event.request)
-    return new Response(body, { headers, status, statusText })
-  } else if (event.url.pathname.startsWith('/keystatic')) {
-    // IDEA: Maybe enable SSR to allow serving the frontend directly from the handle hook
-    // Generally SSR could improve the perceived performance of the page
-    // Since the SveltKit prerendering doesn't seem to work as well as expected,
-    // it makes sense to enabling SSR similarly to how it's done in Remix and Astro.
-    // This would also handle fallback routes, allowing the CMS to be started with any collection.
-    return resolve(event)
+  if (isKeystaticAPIPath.test(event.url.pathname)) {
+    const { body, ...responseInit } = await handleKeystatic(event.request)
+    return new Response(body, responseInit)
   }
+  // } else if (isKeystaticUIPath.test(event.url.pathname)) {
+  //   const react = sveltify({ Keystatic }, { createPortal, ReactDOM, renderToString }) // Optional step, but adds type-safety
+  //   const keystatic = render(react.Keystatic, { props: { config: config as Config<any, any> } })
+
+  //   // TODO: figure out which ID keystatic wants to render to and set it here
+  //   // IDEA: Or make it render directly using the regular react SSR renderToString()
+  //   // NOTE: Might be an alternative: https://github.com/ivstudio/ssr-express-react/blob/main/src/server/render.tsx
+  //   const body = `<!doctype html>
+  // <html lang="en">
+  //   <head>
+  //     <meta charset="utf-8" />
+  //     <meta name="viewport" content="width=device-width, initial-scale=1" />
+  //     ${keystatic.head}
+  //   </head>
+  //   <body>
+  //     <div id="root">${keystatic.body}</div>
+  //   </body>
+  // </html>`
+
+  //   return new Response(body, { headers: { 'Content-Type': 'text/html' } })
+  // }
 
   // IDEA: Let the handle hook implement the /keystatic routes as well.
   // This way, we can hide everything related to Keystatic in a handle-hook to make it very convenient to use.
