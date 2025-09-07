@@ -1,11 +1,7 @@
 <script lang="ts">
-  import { sveltify } from 'svelte-preprocess-react'
-  import { Keystatic } from '@keystatic/core/ui'
-  import { type Config } from '@keystatic/core'
+  import KeystaticCMS from '$lib/keystatic/KeystaticCMS.svelte'
 
-  import keystaticConfig from '../../../../keystatic.config'
-
-  const react = sveltify({ Keystatic }) // Optional step, but adds type-safety
+  import config from '../../../../keystatic.config'
 </script>
 
-<react.Keystatic config={keystaticConfig as Config<any, any>} />
+<KeystaticCMS {config} />
