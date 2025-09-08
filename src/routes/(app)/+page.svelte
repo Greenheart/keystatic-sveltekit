@@ -19,3 +19,5 @@
     <li><a href={`/posts/${post.slug}`}>{post.title}</a></li>
   {/each}
 </ul>
+
+Edit posts in{' '}<a href="/keystatic">Keystatic</a>

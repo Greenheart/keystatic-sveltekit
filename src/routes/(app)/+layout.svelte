@@ -6,6 +6,7 @@
 </script>
 
 <svelte:head>
+  <title>SvelteKit + Keystatic + markdoc-svelte</title>
   <link rel="icon" href={favicon} />
 </svelte:head>
 
