@@ -1,6 +1,9 @@
 body {
   background: #1c1e22;
   color: #cacbce;
+
+  padding: 2rem;
+  margin: 0;
 }
 
 a {

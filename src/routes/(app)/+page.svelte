@@ -5,6 +5,10 @@
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
 
+<!-- TODO: Document how it works in a blog post -->
+<!-- TODO: publish sample repo -->
+<!-- TODO: Maybe package a small library from where the KeystaticCMS.svelte and the handle hook can be imported. Keeping a central library means much easirer usage in projects -->
+
 <h2>Most recent posts</h2>
 
 <ul>
