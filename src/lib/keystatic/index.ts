@@ -14,7 +14,7 @@ export { default as KeystaticCMS } from './KeystaticCMS.svelte'
 export function handleKeystaticAPI({
   config,
 }: Parameters<typeof makeGenericAPIRouteHandler>[0]): Handle {
-  const isKeystaticAPIPath = /^\/api\/keystatic/i
+  const isKeystaticAPIPath = /^\/api\/keystatic/
   const handle = makeGenericAPIRouteHandler({ config })
 
   return async ({ event, resolve }) => {
