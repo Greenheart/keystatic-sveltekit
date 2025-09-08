@@ -2,8 +2,11 @@
   let { data } = $props()
 </script>
 
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<h1>
+  Welcome to <a href="https://svelte.dev/docs/kit" target="_blank">SvelteKit</a> +
+  <a href="https://keystatic.com" target="_blank">Keystatic</a>
+  + <a href="https://github.com/CollierCZ/markdoc-svelte" target="_blank">markdoc-svelte</a>
+</h1>
 
 <!-- TODO: Document how it works in a blog post -->
 <!-- TODO: publish sample repo -->
