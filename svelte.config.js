@@ -9,8 +9,7 @@ const config = {
   preprocess: [
     vitePreprocess(),
     preprocessReact({
-      // Disable SSR since the Keystatic frontend is a SPA.
-      // Source: https://github.com/Thinkmill/keystatic/blob/63c767bbb8b9bbc96c30535862bcccfbbc4ea346/packages/keystatic/src/app/ui.tsx#L287-L317
+      // Disable SSR since the Keystatic frontend is a SPA that explicitly only renders on the client side.
       ssr: false,
     }),
     markdocPreprocess(),
