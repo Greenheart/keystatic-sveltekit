@@ -11,16 +11,22 @@ importers:
       '@keystatic/core':
         specifier: ^0.5.48
         version: 0.5.48(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      markdoc-svelte:
+        specifier: ^3.0.0
+        version: 3.0.0(@types/react@19.1.12)(react@19.1.1)(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
+      zod:
+        specifier: ^4.1.5
+        version: 4.1.5
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^6.0.0
-        version: 6.1.0(@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))
+        version: 6.1.0(@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))
       '@sveltejs/kit':
         specifier: ^2.22.0
-        version: 2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+        version: 2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^6.0.0
-        version: 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+        version: 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
       '@types/node':
         specifier: ^24.3.1
         version: 24.3.1
@@ -50,7 +56,7 @@ importers:
         version: 5.9.2
       vite:
         specifier: ^7.0.4
-        version: 7.1.4(@types/node@24.3.1)
+        version: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
 
 packages:
 
@@ -389,6 +395,18 @@ packages:
 
   '@markdoc/markdoc@0.4.0':
     resolution: {integrity: sha512-fSh4P3Y4E7oaKYc2oNzSIJVPDto7SMzAuQN1Iyx53UxzleA6QzRdNWRxmiPqtVDaDi5dELd2yICoG91csrGrAw==}
+    engines: {node: '>=14.7.0'}
+    peerDependencies:
+      '@types/react': '*'
+      react: '*'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      react:
+        optional: true
+
+  '@markdoc/markdoc@0.5.4':
+    resolution: {integrity: sha512-36YFNlqFk//gVNGm5xZaTWVwbAVF2AOmVjf1tiUrS6tCoD/YSkVy2E3CkAfhc5MlKcjparL/QFHCopxL4zRyaQ==}
     engines: {node: '>=14.7.0'}
     peerDependencies:
       '@types/react': '*'
@@ -1113,6 +1131,9 @@ packages:
   '@types/is-hotkey@0.1.10':
     resolution: {integrity: sha512-RvC8KMw5BCac1NvRRyaHgMMEtBaZ6wh0pyPTBu7izn4Sj/AX9Y4aXU5c7rX8PnM/knsuUpC1IeoBkANtxBypsQ==}
 
+  '@types/linkify-it@3.0.5':
+    resolution: {integrity: sha512-yg6E+u0/+Zjva+buc3EIb+29XEg4wltq7cSmd4Uc2EE/1nUVmxyzpX6gUXD0V8jIrG0r7YeOGVIbYRkxeooCtw==}
+
   '@types/linkify-it@5.0.0':
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
 
@@ -1465,6 +1486,13 @@ packages:
   magic-string@0.30.18:
     resolution: {integrity: sha512-yi8swmWbO17qHhwIBNeeZxTceJMeBvWJaId6dyvTSOwTipqeHhMhOrz6513r1sOKnpvQ7zkhlG8tPrpilwTxHQ==}
 
+  markdoc-svelte@3.0.0:
+    resolution: {integrity: sha512-N8W4XKA1O7DRQWGsMHWS4F2xlCd+gb8qeEcJgdMo06yc19oFxbz3ZdZZGvV/FedN4uFiPLwBF6Nn06MWMG+AFA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      svelte: 4.x || 5.x
+      vite: ^6.0.0
+
   markdown-table@3.0.4:
     resolution: {integrity: sha512-wiYz4+JrLyb/DqW2hkFJxP7Vd7JuTDm77fvbM8VfEQdmSMqcImWeeRbHwZjBjIFki/VaMK2BhFi7oUUZeM5bqw==}
 
@@ -1763,6 +1791,10 @@ packages:
   slate@0.91.4:
     resolution: {integrity: sha512-aUJ3rpjrdi5SbJ5G1Qjr3arytfRkEStTmHjBfWq2A2Q8MybacIzkScSvGJjQkdTk3djCK9C9SEOt39sSeZFwTw==}
 
+  slugify@1.6.6:
+    resolution: {integrity: sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw==}
+    engines: {node: '>=8.0.0'}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -1940,12 +1972,20 @@ packages:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
 
+  yaml@2.8.1:
+    resolution: {integrity: sha512-lcYcMxX2PO9XMGvAJkJ3OsNMw+/7FKes7/hgerGUYWIoWu5j/+YQqcZr5JnPZWzOsEBgMbSbiSTn/dv/69Mkpw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yjs@13.6.27:
     resolution: {integrity: sha512-OIDwaflOaq4wC6YlPBy2L6ceKeKuF7DeTxx+jPzv1FHn9tCZ0ZwSRnUBxD05E3yed46fv/FWJbvR+Ud7x0L7zw==}
     engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   zimmerframe@1.1.2:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
+
+  zod@4.1.5:
+    resolution: {integrity: sha512-rcUUZqlLJgBC33IT3PNMgsCq6TzLQEG/Ei/KTCU0PedSWRMAXoOUN+4t/0H+Q8bdnLPdqUYnvboJT0bn/229qg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -2416,6 +2456,13 @@ snapshots:
 
   '@markdoc/markdoc@0.4.0(@types/react@19.1.12)(react@19.1.1)':
     optionalDependencies:
+      '@types/markdown-it': 12.2.3
+      '@types/react': 19.1.12
+      react: 19.1.1
+
+  '@markdoc/markdoc@0.5.4(@types/react@19.1.12)(react@19.1.1)':
+    optionalDependencies:
+      '@types/linkify-it': 3.0.5
       '@types/markdown-it': 12.2.3
       '@types/react': 19.1.12
       react: 19.1.1
@@ -3425,15 +3472,15 @@ snapshots:
     dependencies:
       acorn: 8.15.0
 
-  '@sveltejs/adapter-auto@6.1.0(@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))':
+  '@sveltejs/adapter-auto@6.1.0(@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))':
     dependencies:
-      '@sveltejs/kit': 2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+      '@sveltejs/kit': 2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
 
-  '@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))':
+  '@sveltejs/kit@2.37.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))':
     dependencies:
       '@standard-schema/spec': 1.0.0
       '@sveltejs/acorn-typescript': 1.0.5(acorn@8.15.0)
-      '@sveltejs/vite-plugin-svelte': 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+      '@sveltejs/vite-plugin-svelte': 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
       '@types/cookie': 0.6.0
       acorn: 8.15.0
       cookie: 0.6.0
@@ -3446,26 +3493,26 @@ snapshots:
       set-cookie-parser: 2.7.1
       sirv: 3.0.2
       svelte: 5.38.7
-      vite: 7.1.4(@types/node@24.3.1)
+      vite: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
 
-  '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))':
+  '@sveltejs/vite-plugin-svelte-inspector@5.0.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+      '@sveltejs/vite-plugin-svelte': 6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
       debug: 4.4.1
       svelte: 5.38.7
-      vite: 7.1.4(@types/node@24.3.1)
+      vite: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))':
+  '@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 5.0.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1))
+      '@sveltejs/vite-plugin-svelte-inspector': 5.0.1(@sveltejs/vite-plugin-svelte@6.1.4(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)))(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
       debug: 4.4.1
       deepmerge: 4.3.1
       magic-string: 0.30.18
       svelte: 5.38.7
-      vite: 7.1.4(@types/node@24.3.1)
-      vitefu: 1.1.1(vite@7.1.4(@types/node@24.3.1))
+      vite: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
+      vitefu: 1.1.1(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
     transitivePeerDependencies:
       - supports-color
 
@@ -3503,6 +3550,9 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/is-hotkey@0.1.10': {}
+
+  '@types/linkify-it@3.0.5':
+    optional: true
 
   '@types/linkify-it@5.0.0':
     optional: true
@@ -3817,6 +3867,17 @@ snapshots:
   magic-string@0.30.18:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  markdoc-svelte@3.0.0(@types/react@19.1.12)(react@19.1.1)(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)):
+    dependencies:
+      '@markdoc/markdoc': 0.5.4(@types/react@19.1.12)(react@19.1.1)
+      slugify: 1.6.6
+      svelte: 5.38.7
+      vite: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
+      yaml: 2.8.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - react
 
   markdown-table@3.0.4: {}
 
@@ -4379,6 +4440,8 @@ snapshots:
       is-plain-object: 5.0.0
       tiny-warning: 1.0.3
 
+  slugify@1.6.6: {}
+
   source-map-js@1.2.1: {}
 
   source-map@0.5.7: {}
@@ -4488,7 +4551,7 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-stringify-position: 4.0.0
 
-  vite@7.1.4(@types/node@24.3.1):
+  vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1):
     dependencies:
       esbuild: 0.25.9
       fdir: 6.5.0(picomatch@4.0.3)
@@ -4499,10 +4562,11 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.1
       fsevents: 2.3.3
+      yaml: 2.8.1
 
-  vitefu@1.1.1(vite@7.1.4(@types/node@24.3.1)):
+  vitefu@1.1.1(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1)):
     optionalDependencies:
-      vite: 7.1.4(@types/node@24.3.1)
+      vite: 7.1.4(@types/node@24.3.1)(yaml@2.8.1)
 
   w3c-keyname@2.2.8: {}
 
@@ -4528,10 +4592,14 @@ snapshots:
 
   yaml@1.10.2: {}
 
+  yaml@2.8.1: {}
+
   yjs@13.6.27:
     dependencies:
       lib0: 0.2.114
 
   zimmerframe@1.1.2: {}
+
+  zod@4.1.5: {}
 
   zwitch@2.0.4: {}

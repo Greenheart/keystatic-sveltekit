@@ -1,9 +1,11 @@
 import adapter from '@sveltejs/adapter-auto'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
+import { markdocPreprocess } from 'markdoc-svelte'
 import preprocessReact from 'svelte-preprocess-react/preprocessReact'
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
+  extensions: ['.svelte', '.mdoc', '.md'],
   preprocess: [
     vitePreprocess(),
     preprocessReact({
@@ -11,6 +13,7 @@ const config = {
       // Source: https://github.com/Thinkmill/keystatic/blob/63c767bbb8b9bbc96c30535862bcccfbbc4ea346/packages/keystatic/src/app/ui.tsx#L287-L317
       ssr: false,
     }),
+    markdocPreprocess(),
   ],
   kit: {
     adapter: adapter(),

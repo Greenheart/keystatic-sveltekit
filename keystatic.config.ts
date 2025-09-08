@@ -15,6 +15,7 @@ export default config({
       schema: {
         title: fields.slug({ name: { label: 'Title' } }),
         content: fields.markdoc({ label: 'Content' }),
+        date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
       },
     }),
   },
