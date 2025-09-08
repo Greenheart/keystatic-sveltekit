@@ -1,5 +1,5 @@
 <script lang="ts">
-  import KeystaticCMS from '$lib/keystatic/KeystaticCMS.svelte'
+  import { KeystaticCMS } from '$lib/keystatic'
 
   import config from '../../../../keystatic.config'
 </script>

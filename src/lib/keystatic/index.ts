@@ -1,6 +1,8 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
 
+export { default as KeystaticCMS } from './KeystaticCMS.svelte'
+
 // IDEA: Thanks to the generic API handler, it's possible to build integrations with any Vite-based framework.
 // Keystatic could probably implement a vite plugin that allows usage with any Vite-based framework to serve a react frontend and handle incoming API requests.
 // handle requests before they are handled by the frontend/meta-frameworks.
