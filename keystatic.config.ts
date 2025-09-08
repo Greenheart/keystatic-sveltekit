@@ -15,7 +15,13 @@ export default config({
       path: 'src/content/posts/**',
       format: { contentField: 'content' },
       schema: {
-        title: fields.slug({ name: { label: 'Title' } }),
+        title: fields.slug({
+          name: { label: 'Title' },
+          slug: {
+            description:
+              'Tip: You can save to a specific directory like for example "2025/new-post"',
+          },
+        }),
         content: fields.markdoc({ label: 'Content' }),
         date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
       },
