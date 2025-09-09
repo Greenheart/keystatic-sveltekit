@@ -10,7 +10,6 @@
 
 <!-- TODO: Document how it works in a blog post -->
 <!-- TODO: publish sample repo -->
-<!-- TODO: Maybe package a small library from where the KeystaticCMS.svelte and the handle hook can be imported. Keeping a central library means much easirer usage in projects -->
 
 <h2>Most recent posts</h2>
 
