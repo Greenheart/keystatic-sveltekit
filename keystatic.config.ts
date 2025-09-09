@@ -1,5 +1,6 @@
 import { config, fields, collection } from '@keystatic/core'
 
+// TODO: Customise the Markdoc config to allow custom tags (for example to handle images )
 export const markdocConfig = fields.markdoc.createMarkdocConfig({})
 
 export default config({
