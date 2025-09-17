@@ -1,5 +1,5 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
-import type { Handle } from '@sveltejs/kit'
+import type { Handle, RequestEvent } from '@sveltejs/kit'
 import viteReact from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
 import { cp, mkdir, readFile, rename } from 'node:fs/promises'
@@ -186,6 +186,43 @@ async function OLD_buildCMS() {
   }
 }
 
+let projectRoot: string
+/** Where to serve the CMS frontend from */
+let cmsOutDir: string
+/** Where to save the build output for the CMS frontend */
+let devDir: string
+let prodDir: string
+let buildCompleted = false
+/** Can be awaited to ensure the build is completed */
+// IDEA: Maybe store the files that are available to serve in a Set.
+// Then we can await the promise when initiating the CMS UI and serve those files from the cmsOutDir.
+let frontendBuildPromise: Promise<void>
+
+async function initCMS() {
+  if (!buildCompleted) {
+    await frontendBuildPromise
+  }
+
+  // Load the cached files
+
+  return (event: RequestEvent) => {
+    // read from the cmsOutDir and serve assets
+    // Either bundle everything as one big HTML file which is easier to serve
+    // Also, even though the initial page load is slower, we will get a better performance on subsequent CMS page loads
+    // since the JS bundle will be cached, and the HTML response is very lightweight
+
+    // In this function, we already know the request is for the CMS frontend
+    console.log(event.url.pathname)
+
+    // TODO: Test if url is included in the manifest of built assets for the CMS
+    // if (event.url.pathname)
+
+    // If included, serve, else throw 404
+
+    return new Response('CMS', { headers: { 'Content-Type': 'text/html' } })
+  }
+}
+
 /**
  * Create a handler for all requests to the Keystatic CMS and API.
  */
@@ -195,7 +232,7 @@ export async function handleKeystatic(
   const isKeystaticPath = /^\/keystatic/
   const isKeystaticAPIPath = /^\/api\/keystatic/
   const handleAPI = makeGenericAPIRouteHandler(...args)
-  const renderUI = await OLD_buildCMS()
+  const renderUI = await initCMS()
   // TODO: Serve the CMS from a specific directory. This needs access to the plugin context
 
   // TODO: Maybe prerender the CMS app and inject it as static assets served from node modules?
@@ -224,7 +261,7 @@ export async function handleKeystatic(
 
   return async ({ event, resolve }) => {
     if (isKeystaticPath.test(event.url.pathname)) {
-      return renderUI()
+      return renderUI(event)
     } else if (isKeystaticAPIPath.test(event.url.pathname)) {
       const { body, ...responseInit } = await handleAPI(event.request)
       return new Response(body, responseInit)
@@ -238,15 +275,6 @@ export async function handleKeystatic(
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
 export function keystatic(): Plugin {
-  let projectRoot = ''
-  /** Where to serve the CMS frontend from */
-  let cmsOutDir: string
-  /** Where to save the build output for the CMS frontend */
-  let devDir: string
-  let prodDir: string
-  let buildCompleted = false
-  let frontendBuildPromise: ReturnType<typeof build>
-
   const virtualConfig = 'virtual:keystatic.config'
   // const virtualCMS = 'virtual:keystatic-cms'
   // const resolvedVirtualCMS = '\0' + virtualCMS
@@ -260,11 +288,11 @@ export function keystatic(): Plugin {
   // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
 
   async function buildCMS() {
-    console.info('[keystatic-sveltekit] Building Keystatic CMS...')
+    // console.info('[keystatic-sveltekit] Building Keystatic CMS...')
 
     // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
     // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
-    const res = await build({
+    await build({
       appType: 'spa',
       logLevel: 'error',
       base: '/keystatic',
@@ -298,8 +326,6 @@ export function keystatic(): Plugin {
     await cp(devDir, prodDir, { recursive: true })
 
     buildCompleted = true
-
-    return res
   }
 
   return {
