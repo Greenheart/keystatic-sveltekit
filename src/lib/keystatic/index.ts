@@ -2,16 +2,21 @@ import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
 import type { Plugin } from 'vite'
 
+import { renderKeystatic } from './ui'
+
 /**
- * Create an API handler for all keystatic API requests.
+ * Create a handler for all requests to the Keystatic CMS and API.
  */
-export function handleKeystaticAPI(...args: Parameters<typeof makeGenericAPIRouteHandler>): Handle {
+export function handleKeystatic(...args: Parameters<typeof makeGenericAPIRouteHandler>): Handle {
+  const isKeystaticPath = /^\/keystatic/
   const isKeystaticAPIPath = /^\/api\/keystatic/
-  const handle = makeGenericAPIRouteHandler(...args)
+  const handleAPI = makeGenericAPIRouteHandler(...args)
 
   return async ({ event, resolve }) => {
-    if (isKeystaticAPIPath.test(event.url.pathname)) {
-      const { body, ...responseInit } = await handle(event.request)
+    if (isKeystaticPath.test(event.url.pathname)) {
+      return renderKeystatic()
+    } else if (isKeystaticAPIPath.test(event.url.pathname)) {
+      const { body, ...responseInit } = await handleAPI(event.request)
       return new Response(body, responseInit)
     }
 
