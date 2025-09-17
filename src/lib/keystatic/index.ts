@@ -186,22 +186,46 @@ async function OLD_buildCMS() {
   }
 }
 
-let projectRoot: string
-/** Where to serve the CMS frontend from */
-let cmsOutDir: string
-/** Where to save the build output for the CMS frontend */
-let devDir: string
-let prodDir: string
-let buildCompleted = false
-/** Can be awaited to ensure the build is completed */
-// IDEA: Maybe store the files that are available to serve in a Set.
-// Then we can await the promise when initiating the CMS UI and serve those files from the cmsOutDir.
-let frontendBuildPromise: Promise<void>
+/**
+ * Shared plugin state
+ *
+ * Wrapped in an object to allow the handle hooks to reference the latest state even in other modules.
+ */
+const pluginState: {
+  /** The project root directory */
+  projectRoot: string
+  /** Defines which directory from where to serve the CMS frontend. */
+  cmsOutDir: string
+  /** The development build is saved here */
+  devDir: string
+  /** The production build is saved here */
+  prodDir: string
+  /** Resolves to a Set with all filenames of the latest CMS frontend build */
+  frontendBuildAssets: Promise<Set<string>> | null
+} = {
+  projectRoot: '',
+  cmsOutDir: '',
+  devDir: '',
+  prodDir: '',
+  frontendBuildAssets: null,
+}
+
+/**
+ * Wait until a condition is true
+ */
+function until(isReady: () => boolean, interval: number = 400) {
+  const poll = (resolve: (value?: unknown) => void) => {
+    if (isReady()) resolve()
+    else setTimeout(() => poll(resolve), interval)
+  }
+
+  return new Promise(poll)
+}
 
 async function initCMS() {
-  if (!buildCompleted) {
-    await frontendBuildPromise
-  }
+  await until(() => pluginState.frontendBuildAssets !== null)
+
+  const assets = await pluginState.frontendBuildAssets
 
   // Load the cached files
 
@@ -212,7 +236,7 @@ async function initCMS() {
     // since the JS bundle will be cached, and the HTML response is very lightweight
 
     // In this function, we already know the request is for the CMS frontend
-    console.log(event.url.pathname)
+    console.log(event.url.pathname, assets)
 
     // TODO: Test if url is included in the manifest of built assets for the CMS
     // if (event.url.pathname)
@@ -232,7 +256,7 @@ export async function handleKeystatic(
   const isKeystaticPath = /^\/keystatic/
   const isKeystaticAPIPath = /^\/api\/keystatic/
   const handleAPI = makeGenericAPIRouteHandler(...args)
-  const renderUI = await initCMS()
+  let renderUI: Awaited<ReturnType<typeof initCMS>>
   // TODO: Serve the CMS from a specific directory. This needs access to the plugin context
 
   // TODO: Maybe prerender the CMS app and inject it as static assets served from node modules?
@@ -261,6 +285,11 @@ export async function handleKeystatic(
 
   return async ({ event, resolve }) => {
     if (isKeystaticPath.test(event.url.pathname)) {
+      if (!renderUI) {
+        // Lazy init when the first request comes in
+        // This ensures that the CMS has been configured and the CMS build has been started
+        renderUI = await initCMS()
+      }
       return renderUI(event)
     } else if (isKeystaticAPIPath.test(event.url.pathname)) {
       const { body, ...responseInit } = await handleAPI(event.request)
@@ -292,13 +321,13 @@ export function keystatic(): Plugin {
 
     // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
     // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
-    await build({
+    const result = await build({
       appType: 'spa',
       logLevel: 'error',
       base: '/keystatic',
       mode: 'production',
       build: {
-        outDir: devDir,
+        outDir: pluginState.devDir,
         emptyOutDir: true,
         rollupOptions: {
           output: {
@@ -320,12 +349,26 @@ export function keystatic(): Plugin {
       ],
     })
 
-    // These tasks need to happen in order
-    await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
-    await mkdir(prodDir, { recursive: true })
-    await cp(devDir, prodDir, { recursive: true })
+    // These filesystem-tasks need to happen in order since they work with the same files
+    await rename(
+      resolve(pluginState.devDir, 'index.html'),
+      resolve(pluginState.devDir, 'keystatic.html'),
+    )
+    await mkdir(pluginState.prodDir, { recursive: true })
+    await cp(pluginState.devDir, pluginState.prodDir, { recursive: true })
 
-    buildCompleted = true
+    function getFileNames(result: Awaited<ReturnType<typeof build>>) {
+      if ('output' in result) {
+        return result.output.map(({ fileName }) => fileName)
+      } else if (Array.isArray(result)) {
+        return result.flatMap(({ output }) => output.map(({ fileName }) => fileName))
+      }
+      throw new Error('[keystatic-sveltekit] Unexpected output from CMS build: \n' + result)
+    }
+
+    return new Set(
+      getFileNames(result).map((name) => (/\.html$/.test(name) ? 'keystatic.html' : name)),
+    )
   }
 
   return {
@@ -349,18 +392,18 @@ export function keystatic(): Plugin {
       // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
       // If command === serve and mode === production --> then serve from the prod directory
 
-      projectRoot = config.root ?? process.cwd()
+      pluginState.projectRoot = config.root ?? process.cwd()
 
-      devDir = resolve(projectRoot, '.svelte-kit/keystatic')
-      prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
+      pluginState.devDir = resolve(pluginState.projectRoot, '.svelte-kit/keystatic')
+      pluginState.prodDir = resolve(pluginState.projectRoot, '.svelte-kit/output/client/')
 
       // console.log({ devDir, prodDir })
       // console.log(config?.build?.ssr, env)
 
       if (env.mode === 'production') {
-        cmsOutDir = prodDir
+        pluginState.cmsOutDir = pluginState.prodDir
       } else {
-        cmsOutDir = devDir
+        pluginState.cmsOutDir = pluginState.devDir
       }
 
       return true
@@ -386,12 +429,9 @@ export function keystatic(): Plugin {
     //   }
     // },
     async config(config) {
-      // Start the CMS frontend build
-      frontendBuildPromise ??= buildCMS()
-
-      // TODO: make the sveltekit hooks aware of the status of the sveltekit build
-      // Or just build everything up front like this:
-      // await buildCMS()
+      // Start the CMS frontend build, but don't wait for it to finish yet.
+      // This allows the rest of the dev server to start up without noticeable delay.
+      pluginState.frontendBuildAssets ??= buildCMS()
 
       return {
         server: {
