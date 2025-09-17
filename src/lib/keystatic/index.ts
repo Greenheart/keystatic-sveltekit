@@ -191,7 +191,7 @@ async function OLD_buildCMS() {
  *
  * Wrapped in an object to allow the handle hooks to reference the latest state even in other modules.
  */
-class KeystaticPluginState {
+class KeystaticIntegrationState {
   /** The project root directory */
   projectRoot: string
   /** Defines which directory from where to serve the CMS frontend. */
@@ -229,19 +229,35 @@ class KeystaticPluginState {
 // then they should be able to share state even across module boundaries, since they are in the same place
 // IDEA: Alternatively, we could use getters and setters to access the latest state across module boundaries.
 
-function initKeystaticSvelteKit() {
-  // TODO: Add shared state
+// TODO: Revert back to the simpler exported functions
+// IDEA: Or maybe a simpler alternative: use simple exported functions and let the hook poll for changes in the file system
+// Maybe write a temp file when starting the vite plugin, and update it whenever changes occur?
+// Write a manifest file that the hook handler can use.
+// If the file does not exist, wait until it does
+// If the file exists but the entries specified in it do not, then wait a while and try again. If it still fails after 30 seconds, throw an error.
+// In the vite plugin, whenever a new build starts, empty the file and write the updatedAt timestamp as well as an empty array of entries
 
-  /** The project root directory */
-  let projectRoot = ''
-  /** Defines which directory from where to serve the CMS frontend. */
-  let cmsOutDir = ''
-  /** The development build is saved here */
-  let devDir = ''
-  /** The production build is saved here */
-  let prodDir = ''
-  /** Resolves to a Set with all filenames of the latest CMS frontend build */
-  let frontendBuildAssets: Promise<Set<string>> | null = null
+/*
+
+NOTE: We run two separate contexts within the same process. This means we're better off using separate function exports, and just poll the file system for changes.
+// https://nodejs.org/api/fs.html#fs_fs_watchfile_filename_options_listener
+// https://nodejs.org/api/fs.html#fswatchfilename-options-listener
+
+*/
+
+function initKeystaticSvelteKit() {
+  const self = new KeystaticIntegrationState()
+
+  // /** The project root directory */
+  // let projectRoot = ''
+  // /** Defines which directory from where to serve the CMS frontend. */
+  // let cmsOutDir = ''
+  // /** The development build is saved here */
+  // let devDir = ''
+  // /** The production build is saved here */
+  // let prodDir = ''
+  // /** Resolves to a Set with all filenames of the latest CMS frontend build */
+  // let frontendBuildAssets: Promise<Set<string>> | null = null
 
   // /**
   //  * Wait until a condition is true
@@ -267,7 +283,7 @@ function initKeystaticSvelteKit() {
 
     async function initCMS() {
       // await until(() => frontendBuildAssets !== null)
-      const assets = await frontendBuildAssets
+      const assets = await self.frontendBuildAssets
 
       // Load the cached files
 
@@ -360,7 +376,7 @@ function initKeystaticSvelteKit() {
         base: '/keystatic',
         mode: 'production',
         build: {
-          outDir: devDir,
+          outDir: self.devDir,
           emptyOutDir: true,
           rollupOptions: {
             output: {
@@ -383,9 +399,9 @@ function initKeystaticSvelteKit() {
       })
 
       // These filesystem-tasks need to happen in order since they work with the same files
-      await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
-      await mkdir(prodDir, { recursive: true })
-      await cp(devDir, prodDir, { recursive: true })
+      await rename(resolve(self.devDir, 'index.html'), resolve(self.devDir, 'keystatic.html'))
+      await mkdir(self.prodDir, { recursive: true })
+      await cp(self.devDir, self.prodDir, { recursive: true })
 
       function getFileNames(result: Awaited<ReturnType<typeof build>>) {
         if ('output' in result) {
@@ -422,18 +438,18 @@ function initKeystaticSvelteKit() {
         // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
         // If command === serve and mode === production --> then serve from the prod directory
 
-        projectRoot = config.root ?? process.cwd()
+        self.projectRoot = config.root ?? process.cwd()
 
-        devDir = resolve(projectRoot, '.svelte-kit/keystatic')
-        prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
+        self.devDir = resolve(self.projectRoot, '.svelte-kit/keystatic')
+        self.prodDir = resolve(self.projectRoot, '.svelte-kit/output/client/')
 
         // console.log({ devDir, prodDir })
         // console.log(config?.build?.ssr, env)
 
         if (env.mode === 'production') {
-          cmsOutDir = prodDir
+          self.cmsOutDir = self.prodDir
         } else {
-          cmsOutDir = devDir
+          self.cmsOutDir = self.devDir
         }
 
         return true
@@ -461,7 +477,7 @@ function initKeystaticSvelteKit() {
       async config(config) {
         // Start the CMS frontend build, but don't wait for it to finish yet.
         // This allows the rest of the dev server to start up without noticeable delay.
-        frontendBuildAssets ??= buildCMS()
+        self.frontendBuildAssets ??= buildCMS()
         return {
           server: {
             // NOTE: The Keystatic SPA redirects to `127.0.0.1` when it loads, which doesn't work with the default SvelteKit + Vite configs.
