@@ -23,14 +23,33 @@ export function handleKeystaticAPI(...args: Parameters<typeof makeGenericAPIRout
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
 export function keystatic(): Plugin {
+  const virtualConfig = 'virtual:keystatic.config'
+  const virtualCMS = 'virtual:keystatic-cms'
+  // const resolvedVirtualCMS = '\0' + virtualCMS
+
   return {
     name: 'keystatic',
-    resolveId(id) {
-      if (id === 'virtual:keystatic.config') {
+    // enforce: 'pre',
+    async resolveId(id) {
+      if (id === virtualConfig) {
         return this.resolve('./keystatic.config', './a')
       }
-      return null
+      // else if (id === virtualCMS) {
+      //   return resolvedVirtualCMS
+      //   // return this.resolve('$lib/keystatic/keystatic.html?raw', './a', {
+      //   //   isEntry: true,
+      //   //   custom: [],
+      //   // })
+      // }
+      // return null
     },
+    // async load(id) {
+    //   if (id === resolvedVirtualCMS) {
+    //     return import('$lib/keystatic/keystatic.html?raw')
+
+    //     return
+    //   }
+    // },
     config(config) {
       return {
         server: {

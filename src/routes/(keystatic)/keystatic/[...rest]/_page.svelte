@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { KeystaticCMS } from '$lib/keystatic/ui'
+  import { Keystatic } from '$lib/keystatic/ui'
 </script>
 
 <svelte:head>
   <title>Keystatic CMS</title>
 </svelte:head>
 
-<KeystaticCMS />
+<Keystatic />
