@@ -2,8 +2,8 @@ import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { type Plugin } from 'vite'
-import { build } from 'esbuild'
+import { type Plugin, transformWithEsbuild } from 'vite'
+// import { build } from 'esbuild'
 
 // let cmsHTML: string | null = null
 
@@ -97,45 +97,72 @@ import { build } from 'esbuild'
 async function buildCMS() {
   const htmlTemplate = await readFile(resolve(import.meta.dirname, './keystatic.html'), 'utf-8')
 
-  const built = (
-    await build({
-      entryPoints: [resolve(import.meta.dirname, './client.tsx')],
-      platform: 'browser',
+  const rawJS = await transformWithEsbuild(
+    await readFile(resolve(import.meta.dirname, './client.tsx'), 'utf-8'),
+    './client.tsx',
+    {
       jsx: 'automatic',
-      bundle: true,
-      minify: true,
-      write: false,
-      // TODO: Find another way to inject the actual config, maybe use an inline expression instead
-      // IDEA: Maybe we can tell esbuild to resolve a module to a specific path? Basically an alias
-      // define: {
-      //   'virtual:keystatic.config': `"${resolve(import.meta.dirname, '../../../keystatic.config.ts')}"`,
-      // },
-      // alias: {
-      //   // NOTE: Finding the nearest config file is a bit shaky, maybe we could get the config path
-      //   // or the loaded config passed down from the SvelteKit hook instead, and inline the result?
-      //   'virtual:keystatic.config': `${import.meta.resolve('./keystatic')}`,
-      // },
+      platform: 'browser',
+    },
+  )
 
-      define: {
-        KEYSTATIC_CONFIG: '{}',
-      },
+  // const built = (
+  //   await build({
+  //     entryPoints: [resolve(import.meta.dirname, './client.tsx')],
+  //     platform: 'browser',
+  //     jsx: 'automatic',
+  //     bundle: true,
+  //     minify: true,
+  //     write: false,
+  //     // TODO: Find another way to inject the actual config, maybe use an inline expression instead
+  //     // IDEA: Maybe we can tell esbuild to resolve a module to a specific path? Basically an alias
+  //     // define: {
+  //     //   'virtual:keystatic.config': `"${resolve(import.meta.dirname, '../../../keystatic.config.ts')}"`,
+  //     // },
+  //     // alias: {
+  //     //   // NOTE: Finding the nearest config file is a bit shaky, maybe we could get the config path
+  //     //   // or the loaded config passed down from the SvelteKit hook instead, and inline the result?
+  //     //   'virtual:keystatic.config': `${import.meta.resolve('./keystatic')}`,
+  //     // },
 
-      // alias: {
-      //   'virtual:keystatic.config': `"${}"`
-      // }
-    })
-  ).outputFiles[0]
+  //     define: {
+  //       KEYSTATIC_CONFIG: '{}',
+  //     },
 
-  if (!built) {
-    throw new Error('Failed building the CMS bundle')
-  }
+  //     // alias: {
+  //     //   'virtual:keystatic.config': `"${}"`
+  //     // }
+  //   })
+  // ).outputFiles[0]
 
-  const cmsBundle = new TextDecoder('utf-8').decode(built.contents)
+  // if (!built) {
+  //   throw new Error('Failed building the CMS bundle')
+  // }
 
-  const cmsHTML = htmlTemplate.replace('%keystatic.body%', `<script>${cmsBundle}</script>`)
+  // const cmsBundle = new TextDecoder().decode(built.contents)
 
-  console.log(cmsHTML.slice(0, 2000))
-  console.log(cmsHTML.slice)
+  // const cmsHTML = htmlTemplate.replace('%keystatic.body%', `<script>${cmsBundle}</script>`)
+
+  // IDEA: In the built js client code, what if we would replace the imports with `/keystatic/@fs/<full path>` and `/keystatic/node_modules/.vite/deps/`?
+  // This might could make it possible to import modules from the generated script, as long as we know from where to import them
+  // IDEA: Alternatively, consider exploring the prerendering options again with react-dom
+
+  /*
+
+import __vite__cjsImport0_react_jsxDevRuntime from "/keystatic/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=b67eced7"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+import __vite__cjsImport1_reactDom_client from "/keystatic/node_modules/.vite/deps/react-dom_client.js?v=b67eced7"; const createRoot = __vite__cjsImport1_reactDom_client["createRoot"];
+import { Keystatic } from "/keystatic/node_modules/.vite/deps/@keystatic_core_ui.js?v=b67eced7";
+import config from "/keystatic/@fs/home/grh/Code/personal/keystatic-sveltekit/keystatic.config.ts";
+
+*/
+
+  const cmsJS = rawJS.code //.replace('', '')
+
+  const cmsHTML = htmlTemplate
+    // During development, we need to include the vite client to allow dependencies to be loaded properly
+    .replace('%keystatic.head%', `<script type="module" src="/@vite/client"></script>`)
+    // Inject the transformed CMS UI
+    .replace('%keystatic.body%', `<script type="module">${cmsJS}</script>`)
 
   return function renderUI() {
     return new Response(cmsHTML, { headers: { 'Content-Type': 'text/html' } })
@@ -170,7 +197,7 @@ export async function handleKeystatic(
  */
 export function keystatic(): Plugin {
   const virtualConfig = 'virtual:keystatic.config'
-  const virtualCMS = 'virtual:keystatic-cms'
+  // const virtualCMS = 'virtual:keystatic-cms'
   // const resolvedVirtualCMS = '\0' + virtualCMS
 
   return {
@@ -212,7 +239,15 @@ export function keystatic(): Plugin {
         },
         optimizeDeps: {
           // NOTE: Maybe include the known dependencies in the optimizeDeps, and then just let them be plain imports?
-          entries: ['keystatic.config.*'],
+          // more info: https://vite.dev/guide/dep-pre-bundling.html#customizing-the-behavior
+          entries: [
+            'keystatic.config.*',
+            'react-dom/client',
+            '@keystatic/core/ui',
+            'react/jsx-runtime',
+            // IDEA: Maybe trigger optimise deps directly for the plugin code?
+            // './src/lib/keystatic/client.tsx',
+          ],
         },
       }
     },
