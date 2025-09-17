@@ -217,6 +217,9 @@ export async function handleKeystatic(
   // In that case, they should .gitignore the generated Keystatic CMS files, and disable the keystatic plugin for the production environment, which would prevent the CMS files from being added to the production build.
   // The keystatic plugin could inform about this by having a required option.
 
+  // NOTE: During dev, we can just serve any file we want using the vite plugin.
+  // For the production build, we could detect the environment
+
   return async ({ event, resolve }) => {
     if (isKeystaticPath.test(event.url.pathname)) {
       return renderUI()
@@ -233,13 +236,48 @@ export async function handleKeystatic(
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
 export function keystatic(): Plugin {
+  let projectRoot = ''
+
   const virtualConfig = 'virtual:keystatic.config'
   // const virtualCMS = 'virtual:keystatic-cms'
   // const resolvedVirtualCMS = '\0' + virtualCMS
 
+  // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
+  // NOTE: When building the Keystatic CMS frontend, we could use process.env.NODE_ENV to either
+  // 1) during development, output to the tmp directory in node_modules (during dev)
+  // 2) during production, build to the static directory (after SvelteKit) has been built.
+  // basically this just determines where the CMS frontend is stored, and from where it is served.
+  // If this works, we could then serve the built assets.
+  // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
+
   return {
-    name: 'keystatic',
+    name: 'keystatic-sveltekit',
     // enforce: 'pre',
+    apply(config, env) {
+      // TODO: detect if we are running in production or not
+      // detect if we are serving the app or not
+
+      // if command === build and mode production --> then we should use the prod directory
+      // if command === serve and mode production --> then we should use the prod directory
+      // if command === serve and mode development --> then we should use the dev directory
+      // However, this will also happen for prerendering it seems. So we should build to both locations just in case
+      // build to .svelte-kit/output/client/ if it exists. Otherwise, only build to dev.
+
+      // Build during serve and development
+      // Build if command is build, no matter the environment, and build to both locations
+      // During serve and production, we should hopefully be able to only serve, and if not fall back to build again
+
+      // Conclusion 1: Always build to node_modules
+      // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
+      // If command === serve and mode === production --> then serve from the prod directory
+
+      console.log(config?.build?.ssr, env)
+
+      // undefined build production
+      // undefined serve development
+
+      return env.command === 'serve'
+    },
     async resolveId(id) {
       if (id === virtualConfig) {
         return this.resolve('./keystatic.config', './a')
@@ -261,6 +299,8 @@ export function keystatic(): Plugin {
     //   }
     // },
     config(config) {
+      projectRoot = config.root ?? process.cwd()
+
       return {
         server: {
           // NOTE: The Keystatic SPA redirects to `127.0.0.1` when it loads, which doesn't work with the default SvelteKit + Vite configs.
@@ -290,3 +330,6 @@ export function keystatic(): Plugin {
     },
   }
 }
+
+// NOTE: Or if all fails, just add the page with a small react wrapper component to handle uncaught errors from the expected routing issues.
+// Though this requires more drastic changes in all SvelteKit apps using this library.
