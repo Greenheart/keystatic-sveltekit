@@ -1,9 +1,9 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
 import viteReact from '@vitejs/plugin-react'
-import { readFileSync } from 'node:fs'
-import { cp, mkdir, readFile, rename } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { cp, mkdir, readdir, readFile, rename } from 'node:fs/promises'
+import { basename, resolve } from 'node:path'
 import { type Plugin, transformWithEsbuild, createServer, build, type PluginContainer } from 'vite'
 // import { build } from 'esbuild'
 
@@ -202,6 +202,25 @@ NOTE: We run two separate contexts within the same process. This means we're bet
 */
 
 /**
+ * Wait until a condition is true.
+ */
+function until(isReady: () => Promise<boolean>, checkInterval = 100, timeout = 30_000) {
+  const initial = Date.now()
+  return new Promise<void>((resolve, reject) => {
+    let interval = setInterval(async () => {
+      if (!(await isReady())) {
+        if (Date.now() - initial > timeout) {
+          reject('[until] Timeout: Failed to resolve within allowed time')
+        }
+        return
+      }
+      clearInterval(interval)
+      resolve()
+    }, checkInterval)
+  })
+}
+
+/**
  * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
  */
 export async function handleKeystatic(
@@ -211,27 +230,59 @@ export async function handleKeystatic(
   const isKeystaticAPIPath = /^\/api\/keystatic/
   const handleAPI = makeGenericAPIRouteHandler(...args)
 
+  const projectRoot = process.cwd()
+  const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
+  const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
+  const cmsOutDir = !import.meta.env.DEV ? prodDir : devDir
+  const htmlFile = resolve(cmsOutDir, 'keystatic.html')
+
   async function initCMS() {
-    // await until(() => frontendBuildAssets !== null)
-    const assets = await frontendBuildAssets
+    // Wait until the build has finished after the most recent server restart
+    await until(async () => {
+      const entries = await readdir(cmsOutDir, 'utf-8')
+      return entries.includes('keystatic.html')
+    })
 
-    // Load the cached files
-
-    return (event: RequestEvent) => {
+    return async (event: RequestEvent) => {
       // read from the cmsOutDir and serve assets
       // Either bundle everything as one big HTML file which is easier to serve
       // Also, even though the initial page load is slower, we will get a better performance on subsequent CMS page loads
       // since the JS bundle will be cached, and the HTML response is very lightweight
 
+      // TODO: if the request is for a JS file and it does not exist, try refreshing the page
+
       // In this function, we already know the request is for the CMS frontend
-      console.log(event.url.pathname, assets)
+      // console.log(event.url.pathname, assets)
 
       // TODO: Test if url is included in the manifest of built assets for the CMS
       // if (event.url.pathname)
 
+      // const jsFile = event.url.pathname.match(/\/(.+)\.js$/)?.[1]
+
+      const jsFile = event.url.pathname.match(/[^/\\&\?]+\.js(?=([\?&].*$|$))/)?.[1]
+
+      console.log(jsFile)
+
+      if (jsFile) {
+        return new Response(await readFile(resolve(cmsOutDir, jsFile), 'utf-8'), {
+          headers: { 'Content-Type': 'application/javascript' },
+        })
+      }
+      // if (event.url.pathname.endsWith('js')) {
+      //   return new Response(
+      //     await readFile(resolve(cmsOutDir, basename(event.url.pathname)), 'utf-8'),
+      //     { headers: { 'Content-Type': 'application/javascript' } },
+      //   )
+      // }
+
       // If included, serve, else throw 404
 
-      return new Response('CMS', { headers: { 'Content-Type': 'text/html' } })
+      // return new Response('<body style="background:#1c1e22;color:#fff">CMS</body>', {
+      //   headers: { 'Content-Type': 'text/html' },
+      // })
+      return new Response(await readFile(htmlFile), {
+        headers: { 'Content-Type': 'text/html' },
+      })
     }
   }
 
@@ -297,6 +348,7 @@ export function keystatic(): Plugin {
   let prodDir = ''
   /** Resolves to a Set with all filenames of the latest CMS frontend build */
   let frontendBuildAssets: Promise<Set<string>> | null = null
+  let shouldBuild = true
 
   // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
   // NOTE: When building the Keystatic CMS frontend, we could use process.env.NODE_ENV to either
@@ -309,8 +361,11 @@ export function keystatic(): Plugin {
   async function buildCMS() {
     // console.info('[keystatic-sveltekit] Building Keystatic CMS...')
 
+    // await writeFile(resolve(devDir))
+
     // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
     // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
+    // TODO: Building in a child_process would be preferred to avoid blocking the main thread
     const result = await build({
       appType: 'spa',
       logLevel: 'error',
@@ -341,6 +396,8 @@ export function keystatic(): Plugin {
 
     // These filesystem-tasks need to happen in order since they work with the same files
     await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
+    // writeFileSync()
+    // TODO: Write manifest file and update data again.
     await mkdir(prodDir, { recursive: true })
     await cp(devDir, prodDir, { recursive: true })
 
@@ -388,6 +445,9 @@ export function keystatic(): Plugin {
       // console.log(config?.build?.ssr, env)
 
       if (env.mode === 'production') {
+        if (env.command === 'serve') {
+          shouldBuild = false
+        }
         cmsOutDir = prodDir
       } else {
         cmsOutDir = devDir
@@ -416,9 +476,13 @@ export function keystatic(): Plugin {
     //   }
     // },
     async config(config) {
-      // Start the CMS frontend build, but don't wait for it to finish yet.
-      // This allows the rest of the dev server to start up without noticeable delay.
-      frontendBuildAssets ??= buildCMS()
+      if (shouldBuild) {
+        // Start the CMS frontend build, but don't wait for it to finish yet.
+        // This allows the rest of the dev server to start up without noticeable delay.
+        // By keeping the Promise, we only start one build per server restart during development
+        frontendBuildAssets ??= buildCMS()
+      }
+
       return {
         server: {
           // NOTE: The Keystatic SPA redirects to `127.0.0.1` when it loads, which doesn't work with the default SvelteKit + Vite configs.
@@ -448,25 +512,3 @@ export function keystatic(): Plugin {
     },
   }
 }
-
-/**
- * Wait until a condition is true
- */
-function until(isReady: () => boolean, interval: number = 400) {
-  const poll = (resolve: (value?: unknown) => void) => {
-    if (isReady()) resolve()
-    else setTimeout(() => poll(resolve), interval)
-  }
-
-  return new Promise(poll)
-}
-
-// IDEA: If the CMS build is too slow, maybe build the CMS in the background, and allow other code to continue executing.
-// We could spawn a child_process and wait for it to finish
-// We only need to wait for the build to finish once the first request comes in.
-// This could be solved by assigning a promise for the build to finish when the vite plugin initializes, and then only wait for that promise when we should serve the first request.
-
-// ------------
-
-// NOTE: Or if all fails, just add the page with a small react wrapper component to handle uncaught errors from the expected routing issues.
-// Though this requires more drastic changes in all SvelteKit apps using this library.

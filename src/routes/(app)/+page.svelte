@@ -19,4 +19,4 @@
   {/each}
 </ul>
 
-Edit posts in{' '}<a href="/keystatic">Keystatic</a>
+Edit posts in{' '}<a href="/keystatic" data-sveltekit-reload>Keystatic</a>
