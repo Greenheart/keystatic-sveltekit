@@ -279,7 +279,7 @@ async function initCMS() {
 /**
  * Create a handler for all requests to the Keystatic CMS and API.
  */
-export async function handleKeystatic(
+async function OLD_handleKeystatic(
   ...args: Parameters<typeof makeGenericAPIRouteHandler>
 ): Promise<Handle> {
   const isKeystaticPath = /^\/keystatic/
@@ -332,7 +332,7 @@ export async function handleKeystatic(
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
-export function keystatic(): Plugin {
+function OLD_keystatic(): Plugin {
   const virtualConfig = 'virtual:keystatic.config'
   // const virtualCMS = 'virtual:keystatic-cms'
   // const resolvedVirtualCMS = '\0' + virtualCMS
@@ -491,6 +491,19 @@ export function keystatic(): Plugin {
     },
   }
 }
+
+function initKeystaticSvelteKit() {
+  // TODO: Add shared state
+
+  return {
+    // TODO: Return both functions
+  }
+}
+
+const integration = initKeystaticSvelteKit()
+
+export const handleKeystatic = integration.handleKeystatic
+export const keystatic = integration.keystatic
 
 // IDEA: If the CMS build is too slow, maybe build the CMS in the background, and allow other code to continue executing.
 // We could spawn a child_process and wait for it to finish
