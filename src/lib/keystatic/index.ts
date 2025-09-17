@@ -2,7 +2,7 @@ import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
 import viteReact from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { readFile, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { type Plugin, transformWithEsbuild, createServer, build, type PluginContainer } from 'vite'
 // import { build } from 'esbuild'
@@ -262,13 +262,22 @@ export function keystatic(): Plugin {
   async function buildCMS() {
     console.info('[keystatic-sveltekit] Building CMS...')
 
+    // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
+    // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
     const res = await build({
       appType: 'spa',
       logLevel: 'error',
       base: '/keystatic',
       mode: 'production',
-      // IDEA: Output as specific filenames
-      build: { outDir: devDir, emptyOutDir: true },
+      build: {
+        outDir: devDir,
+        emptyOutDir: true,
+        rollupOptions: {
+          output: {
+            entryFileNames: 'keystatic-[hash].js',
+          },
+        },
+      },
       root: resolve(import.meta.dirname),
       plugins: [
         viteReact(),
@@ -283,7 +292,7 @@ export function keystatic(): Plugin {
       ],
     })
 
-    // console.log(res)
+    await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
 
     // TODO: Also copy to prod dir
 
