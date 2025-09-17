@@ -1,9 +1,10 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
+import viteReact from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { type Plugin, transformWithEsbuild, createServer } from 'vite'
+import { type Plugin, transformWithEsbuild, createServer, build, type PluginContainer } from 'vite'
 // import { build } from 'esbuild'
 
 // let cmsHTML: string | null = null
@@ -170,7 +171,7 @@ import { type Plugin, transformWithEsbuild, createServer } from 'vite'
 //   }
 // }
 
-async function buildCMS() {
+async function OLD_buildCMS() {
   // This works during development, but not preview or production, which are also very important
   // This server needs to be gracefully shutdown when the main Vite server restarts or closes
   // We should use another solution to enable production usage.
@@ -194,7 +195,8 @@ export async function handleKeystatic(
   const isKeystaticPath = /^\/keystatic/
   const isKeystaticAPIPath = /^\/api\/keystatic/
   const handleAPI = makeGenericAPIRouteHandler(...args)
-  const renderUI = await buildCMS()
+  const renderUI = await OLD_buildCMS()
+  // TODO: Serve the CMS from a specific directory. This needs access to the plugin context
 
   // TODO: Maybe prerender the CMS app and inject it as static assets served from node modules?
   // This would work in development, but likely not in preview and prod - in those cases we would need to actually copy the app to the static directory
@@ -237,6 +239,13 @@ export async function handleKeystatic(
  */
 export function keystatic(): Plugin {
   let projectRoot = ''
+  /** Where to serve the CMS frontend from */
+  let cmsOutDir: string
+  /** Where to save the build output for the CMS frontend */
+  let devDir: string
+  let prodDir: string
+  let buildCompleted = false
+  let frontendBuildPromise: ReturnType<typeof build>
 
   const virtualConfig = 'virtual:keystatic.config'
   // const virtualCMS = 'virtual:keystatic-cms'
@@ -249,6 +258,39 @@ export function keystatic(): Plugin {
   // basically this just determines where the CMS frontend is stored, and from where it is served.
   // If this works, we could then serve the built assets.
   // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
+
+  async function buildCMS() {
+    console.info('[keystatic-sveltekit] Building CMS...')
+
+    const res = await build({
+      appType: 'spa',
+      logLevel: 'error',
+      base: '/keystatic',
+      mode: 'production',
+      // IDEA: Output as specific filenames
+      build: { outDir: devDir, emptyOutDir: true },
+      root: resolve(import.meta.dirname),
+      plugins: [
+        viteReact(),
+        {
+          name: 'resolve-config',
+          resolveId(id) {
+            if (id === virtualConfig) {
+              return this.resolve('./keystatic.config', './a')
+            }
+          },
+        },
+      ],
+    })
+
+    // console.log(res)
+
+    // TODO: Also copy to prod dir
+
+    buildCompleted = true
+
+    return res
+  }
 
   return {
     name: 'keystatic-sveltekit',
@@ -271,12 +313,21 @@ export function keystatic(): Plugin {
       // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
       // If command === serve and mode === production --> then serve from the prod directory
 
-      console.log(config?.build?.ssr, env)
+      projectRoot = config.root ?? process.cwd()
 
-      // undefined build production
-      // undefined serve development
+      devDir = resolve(projectRoot, '.svelte-kit/keystatic')
+      prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
-      return env.command === 'serve'
+      // console.log({ devDir, prodDir })
+      // console.log(config?.build?.ssr, env)
+
+      if (env.mode === 'production') {
+        cmsOutDir = prodDir
+      } else {
+        cmsOutDir = devDir
+      }
+
+      return true
     },
     async resolveId(id) {
       if (id === virtualConfig) {
@@ -298,8 +349,13 @@ export function keystatic(): Plugin {
     //     return
     //   }
     // },
-    config(config) {
-      projectRoot = config.root ?? process.cwd()
+    async config(config) {
+      // Start the CMS frontend build
+      frontendBuildPromise ??= buildCMS()
+
+      // TODO: make the sveltekit hooks aware of the status of the sveltekit build
+      // Or just build everything up front like this:
+      // await buildCMS()
 
       return {
         server: {
@@ -330,6 +386,13 @@ export function keystatic(): Plugin {
     },
   }
 }
+
+// IDEA: If the CMS build is too slow, maybe build the CMS in the background, and allow other code to continue executing.
+// We could spawn a child_process and wait for it to finish
+// We only need to wait for the build to finish once the first request comes in.
+// This could be solved by assigning a promise for the build to finish when the vite plugin initializes, and then only wait for that promise when we should serve the first request.
+
+// ------------
 
 // NOTE: Or if all fails, just add the page with a small react wrapper component to handle uncaught errors from the expected routing issues.
 // Though this requires more drastic changes in all SvelteKit apps using this library.
