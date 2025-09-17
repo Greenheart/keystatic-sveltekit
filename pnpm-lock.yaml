@@ -14,6 +14,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.0.3
         version: 5.0.3(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))
+      esbuild:
+        specifier: ^0.25.9
+        version: 0.25.9
       markdoc-svelte:
         specifier: ^3.0.0
         version: 3.0.0(@types/react@19.1.12)(react@19.1.1)(svelte@5.38.7)(vite@7.1.4(@types/node@24.3.1)(yaml@2.8.1))

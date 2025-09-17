@@ -30,22 +30,6 @@
 //   }
 // }
 
-export async function renderKeystatic() {
-  // @ ts-expect-error This module is registered by the @keystatic/sveltekit Vite plugin
-  // return await import('virtual:keystatic-cms')
-  const raw = (await import('./keystatic.html?raw')).default
-
-  // IDEA: Could I use @vite/plugin-react to manually transform the tsx file and inject it as a string into the HTML?
-  // Or maybe if we manually include all the dependencies we don't need to include other things?
-
-  // TODO: Find a better way to resolve the actual module path.
-  // TODO: Make this work for production builds
-  // IDEA: Maybe this could be transformed in the keystatic Vite plugin instead?
-  const body = raw.replace('./client.tsx', '/src/lib/keystatic/client.tsx')
-
-  return new Response(body, { headers: { 'Content-Type': 'text/html' } })
-}
-
 // export async function renderKeystatic(
 //   // Replace with generic Config<any, any>
 //   props?: Omit<Parameters<typeof Keystatic>[0], 'config'> & { config: Config<any, any> },
