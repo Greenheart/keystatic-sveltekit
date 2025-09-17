@@ -1,6 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import { sveltekit } from '@sveltejs/kit/vite'
-import keystatic from './src/lib/keystatic'
+import { keystatic } from './src/lib/keystatic'
 
 // IDEA: Maybe move this to the keystatic SvelteKit plugin instead?
 // IDEA: Maybe only apply this to the keystatic modules?
@@ -19,5 +19,5 @@ function ensureGDPRCompliantFonts(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [keystatic.vitePlugin(), sveltekit(), ensureGDPRCompliantFonts()],
+  plugins: [keystatic(), sveltekit(), ensureGDPRCompliantFonts()],
 })
