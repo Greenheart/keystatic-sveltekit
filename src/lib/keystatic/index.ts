@@ -232,67 +232,63 @@ class KeystaticPluginState {
 function initKeystaticSvelteKit() {
   // TODO: Add shared state
 
-  // NOTE: If this works, we might just as well use local variables?
-  const pluginState = new KeystaticPluginState()
+  /** The project root directory */
+  let projectRoot = ''
+  /** Defines which directory from where to serve the CMS frontend. */
+  let cmsOutDir = ''
+  /** The development build is saved here */
+  let devDir = ''
+  /** The production build is saved here */
+  let prodDir = ''
+  /** Resolves to a Set with all filenames of the latest CMS frontend build */
+  let frontendBuildAssets: Promise<Set<string>> | null = null
 
-  // let projectRoot: string
-  // /** Where to serve the CMS frontend from */
-  // let cmsOutDir: string
-  // /** Where to save the build output for the CMS frontend */
-  // let devDir: string
-  // let prodDir: string
-  // let buildCompleted = false
-  // /** Can be awaited to ensure the build is completed */
-  // // IDEA: Maybe store the files that are available to serve in a Set.
-  // // Then we can await the promise when initiating the CMS UI and serve those files from the cmsOutDir.
-  // let frontendBuildPromise: Promise<void>
+  // /**
+  //  * Wait until a condition is true
+  //  */
+  // function until(isReady: () => boolean, interval: number = 400) {
+  //   const poll = (resolve: (value?: unknown) => void) => {
+  //     if (isReady()) resolve()
+  //     else setTimeout(() => poll(resolve), interval)
+  //   }
 
-  /**
-   * Wait until a condition is true
-   */
-  function until(isReady: () => boolean, interval: number = 400) {
-    const poll = (resolve: (value?: unknown) => void) => {
-      if (isReady()) resolve()
-      else setTimeout(() => poll(resolve), interval)
-    }
-
-    return new Promise(poll)
-  }
-
-  async function initCMS() {
-    await until(() => pluginState.frontendBuildAssets !== null)
-
-    const assets = await pluginState.frontendBuildAssets
-
-    // Load the cached files
-
-    return (event: RequestEvent) => {
-      // read from the cmsOutDir and serve assets
-      // Either bundle everything as one big HTML file which is easier to serve
-      // Also, even though the initial page load is slower, we will get a better performance on subsequent CMS page loads
-      // since the JS bundle will be cached, and the HTML response is very lightweight
-
-      // In this function, we already know the request is for the CMS frontend
-      console.log(event.url.pathname, assets)
-
-      // TODO: Test if url is included in the manifest of built assets for the CMS
-      // if (event.url.pathname)
-
-      // If included, serve, else throw 404
-
-      return new Response('CMS', { headers: { 'Content-Type': 'text/html' } })
-    }
-  }
+  //   return new Promise(poll)
+  // }
 
   /**
-   * Create a handler for all requests to the Keystatic CMS and API.
+   * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
    */
-  async function handleKeystatic(
+  async function handleHook(
     ...args: Parameters<typeof makeGenericAPIRouteHandler>
   ): Promise<Handle> {
     const isKeystaticPath = /^\/keystatic/
     const isKeystaticAPIPath = /^\/api\/keystatic/
     const handleAPI = makeGenericAPIRouteHandler(...args)
+
+    async function initCMS() {
+      // await until(() => frontendBuildAssets !== null)
+      const assets = await frontendBuildAssets
+
+      // Load the cached files
+
+      return (event: RequestEvent) => {
+        // read from the cmsOutDir and serve assets
+        // Either bundle everything as one big HTML file which is easier to serve
+        // Also, even though the initial page load is slower, we will get a better performance on subsequent CMS page loads
+        // since the JS bundle will be cached, and the HTML response is very lightweight
+
+        // In this function, we already know the request is for the CMS frontend
+        console.log(event.url.pathname, assets)
+
+        // TODO: Test if url is included in the manifest of built assets for the CMS
+        // if (event.url.pathname)
+
+        // If included, serve, else throw 404
+
+        return new Response('CMS', { headers: { 'Content-Type': 'text/html' } })
+      }
+    }
+
     let renderUI: Awaited<ReturnType<typeof initCMS>>
     // TODO: Serve the CMS from a specific directory. This needs access to the plugin context
 
@@ -340,7 +336,7 @@ function initKeystaticSvelteKit() {
   /**
    * Vite plugin to integrate Keystatic with SvelteKit projects
    */
-  function keystatic(): Plugin {
+  function vitePlugin(): Plugin {
     const virtualConfig = 'virtual:keystatic.config'
     // const virtualCMS = 'virtual:keystatic-cms'
     // const resolvedVirtualCMS = '\0' + virtualCMS
@@ -364,7 +360,7 @@ function initKeystaticSvelteKit() {
         base: '/keystatic',
         mode: 'production',
         build: {
-          outDir: pluginState.devDir,
+          outDir: devDir,
           emptyOutDir: true,
           rollupOptions: {
             output: {
@@ -387,12 +383,9 @@ function initKeystaticSvelteKit() {
       })
 
       // These filesystem-tasks need to happen in order since they work with the same files
-      await rename(
-        resolve(pluginState.devDir, 'index.html'),
-        resolve(pluginState.devDir, 'keystatic.html'),
-      )
-      await mkdir(pluginState.prodDir, { recursive: true })
-      await cp(pluginState.devDir, pluginState.prodDir, { recursive: true })
+      await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
+      await mkdir(prodDir, { recursive: true })
+      await cp(devDir, prodDir, { recursive: true })
 
       function getFileNames(result: Awaited<ReturnType<typeof build>>) {
         if ('output' in result) {
@@ -429,18 +422,18 @@ function initKeystaticSvelteKit() {
         // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
         // If command === serve and mode === production --> then serve from the prod directory
 
-        pluginState.projectRoot = config.root ?? process.cwd()
+        projectRoot = config.root ?? process.cwd()
 
-        pluginState.devDir = resolve(pluginState.projectRoot, '.svelte-kit/keystatic')
-        pluginState.prodDir = resolve(pluginState.projectRoot, '.svelte-kit/output/client/')
+        devDir = resolve(projectRoot, '.svelte-kit/keystatic')
+        prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
         // console.log({ devDir, prodDir })
         // console.log(config?.build?.ssr, env)
 
         if (env.mode === 'production') {
-          pluginState.cmsOutDir = pluginState.prodDir
+          cmsOutDir = prodDir
         } else {
-          pluginState.cmsOutDir = pluginState.devDir
+          cmsOutDir = devDir
         }
 
         return true
@@ -468,8 +461,7 @@ function initKeystaticSvelteKit() {
       async config(config) {
         // Start the CMS frontend build, but don't wait for it to finish yet.
         // This allows the rest of the dev server to start up without noticeable delay.
-        pluginState.frontendBuildAssets ??= buildCMS()
-
+        frontendBuildAssets ??= buildCMS()
         return {
           server: {
             // NOTE: The Keystatic SPA redirects to `127.0.0.1` when it loads, which doesn't work with the default SvelteKit + Vite configs.
@@ -501,15 +493,16 @@ function initKeystaticSvelteKit() {
   }
 
   return {
-    handleKeystatic,
-    keystatic,
+    handleHook,
+    vitePlugin,
   }
 }
 
-const integration = initKeystaticSvelteKit()
+const keystatic = initKeystaticSvelteKit()
+export default keystatic
 
-export const handleKeystatic = integration.handleKeystatic
-export const keystatic = integration.keystatic
+// export const handleKeystatic = keystatic.handleKeystatic
+// export const keystatic = keystatic.vitePlugin
 
 // IDEA: If the CMS build is too slow, maybe build the CMS in the background, and allow other code to continue executing.
 // We could spawn a child_process and wait for it to finish
