@@ -2,7 +2,7 @@ import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle } from '@sveltejs/kit'
 import viteReact from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
-import { readFile, rename } from 'node:fs/promises'
+import { cp, mkdir, readFile, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { type Plugin, transformWithEsbuild, createServer, build, type PluginContainer } from 'vite'
 // import { build } from 'esbuild'
@@ -260,7 +260,7 @@ export function keystatic(): Plugin {
   // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
 
   async function buildCMS() {
-    console.info('[keystatic-sveltekit] Building CMS...')
+    console.info('[keystatic-sveltekit] Building Keystatic CMS...')
 
     // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
     // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
@@ -292,9 +292,10 @@ export function keystatic(): Plugin {
       ],
     })
 
+    // These tasks need to happen in order
     await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
-
-    // TODO: Also copy to prod dir
+    await mkdir(prodDir, { recursive: true })
+    await cp(devDir, prodDir, { recursive: true })
 
     buildCompleted = true
 
