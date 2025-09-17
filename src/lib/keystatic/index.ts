@@ -191,7 +191,7 @@ async function OLD_buildCMS() {
  *
  * Wrapped in an object to allow the handle hooks to reference the latest state even in other modules.
  */
-const pluginState: {
+class KeystaticPluginState {
   /** The project root directory */
   projectRoot: string
   /** Defines which directory from where to serve the CMS frontend. */
@@ -201,14 +201,26 @@ const pluginState: {
   /** The production build is saved here */
   prodDir: string
   /** Resolves to a Set with all filenames of the latest CMS frontend build */
-  frontendBuildAssets: Promise<Set<string>> | null
-} = {
-  projectRoot: '',
-  cmsOutDir: '',
-  devDir: '',
-  prodDir: '',
-  frontendBuildAssets: null,
+  #frontendBuildAssets: Promise<Set<string>> | null
+
+  constructor() {
+    this.projectRoot = ''
+    this.cmsOutDir = ''
+    this.devDir = ''
+    this.prodDir = ''
+    this.#frontendBuildAssets = null
+  }
+
+  get frontendBuildAssets() {
+    return this.#frontendBuildAssets
+  }
+
+  set frontendBuildAssets(value: Promise<Set<string>> | null) {
+    this.#frontendBuildAssets = value
+  }
 }
+
+export const pluginState = new KeystaticPluginState()
 
 /**
  * Wait until a condition is true
@@ -246,6 +258,23 @@ async function initCMS() {
     return new Response('CMS', { headers: { 'Content-Type': 'text/html' } })
   }
 }
+
+// TODO: We likely need to export a singleton instance of the plugin which includes both the Vite plugin and the SvelteKit hooks.
+// If we wrap both functions (and the shared state variables) in the same closure,
+// then they should be able to share state even across module boundaries, since they are in the same place
+// IDEA: Alternatively, we could use getters and setters to access the latest state across module boundaries.
+
+// let projectRoot: string
+// /** Where to serve the CMS frontend from */
+// let cmsOutDir: string
+// /** Where to save the build output for the CMS frontend */
+// let devDir: string
+// let prodDir: string
+// let buildCompleted = false
+// /** Can be awaited to ensure the build is completed */
+// // IDEA: Maybe store the files that are available to serve in a Set.
+// // Then we can await the promise when initiating the CMS UI and serve those files from the cmsOutDir.
+// let frontendBuildPromise: Promise<void>
 
 /**
  * Create a handler for all requests to the Keystatic CMS and API.
