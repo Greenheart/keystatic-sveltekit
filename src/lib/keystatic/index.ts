@@ -87,31 +87,6 @@ export async function handleKeystatic(
   }
 
   let renderUI: Awaited<ReturnType<typeof initCMS>>
-  // TODO: Serve the CMS from a specific directory. This needs access to the plugin context
-
-  // TODO: Maybe prerender the CMS app and inject it as static assets served from node modules?
-  // This would work in development, but likely not in preview and prod - in those cases we would need to actually copy the app to the static directory
-  // Or could it be solved with symlinks? Though that's not reliable across all platforms
-  // Likely static assets will be the best option.
-
-  // We could build the Keystatic app separately (using the locall installed versions of vite, react, react-dom, @keystatic/core)
-  // Then capture the output files and update them.
-  // Initially build during every server startup.
-  // TODO: Verify these injected static assets are handled properly by the SvelteKit router. Maybe we need to adjust the manifest file?
-  // TODO: Verify copying the pre-built static assets also works for production.
-  // NOTE: Looks like we need to edit .svelte-kit/output/server/manifest.js and .svelte-kit/output/server/manifest-full.js
-  // so these both include the expected static assets: keystatic.html and the bundled JS.
-  // OR: Maybe we don't need to do that, since these are no special static assets, but only used by the keystatic plugin.
-  // As long as the files get copied over to the final build, that's all that matters
-
-  // IDEA: Another approach would be to output the generated keystatic CMS frontend to the regular static directory of the SvelteKit app
-  // and let people add it to their git history to automatically include it in their build. Or if they only want to use Keystatic locally during development,
-  // they could .gitignore the keystatic files. This would however still include them as static assets during production builds.
-  // In that case, they should .gitignore the generated Keystatic CMS files, and disable the keystatic plugin for the production environment, which would prevent the CMS files from being added to the production build.
-  // The keystatic plugin could inform about this by having a required option.
-
-  // NOTE: During dev, we can just serve any file we want using the vite plugin.
-  // For the production build, we could detect the environment
 
   return async ({ event, resolve }) => {
     if (isKeystaticPath.test(event.url.pathname)) {
