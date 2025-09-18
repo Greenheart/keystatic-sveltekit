@@ -158,9 +158,9 @@ function getBuildMode(env: ConfigEnv): BuildMode {
   if (globalThis.HAS_CMS_BUILD_STARTED) {
     return false
   } else {
-    // Since globalThis is kept for the same Vite parent process that restarts the build,
-    // and because both the Vite config loading and the SvelteKit dev/build process run in the same process,
     // We can use `globalThis` to reliably determine if there has been a previous build.
+    // This is possible since `globalThis` is shared in the Vite parent process that restarts the build,
+    // and because both the Vite config loading and the SvelteKit dev/build process are run by the same parent process,
     globalThis.HAS_CMS_BUILD_STARTED = true
   }
 
