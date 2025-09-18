@@ -25,14 +25,15 @@ function until(isReady: () => boolean | Promise<boolean>, checkInterval = 400, t
   })
 }
 
+const isKeystaticPath = /^\/keystatic/
+const isKeystaticAPIPath = /^\/api\/keystatic/
+
 /**
  * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
  */
 export async function handleKeystatic(
   ...args: Parameters<typeof makeGenericAPIRouteHandler>
 ): Promise<Handle> {
-  const isKeystaticPath = /^\/keystatic/
-  const isKeystaticAPIPath = /^\/api\/keystatic/
   const handleAPI = makeGenericAPIRouteHandler(...args)
 
   const projectRoot = process.cwd()
@@ -252,3 +253,24 @@ export function keystatic(): Plugin {
     },
   }
 }
+
+/**
+ * Returns a boolean indicating whether the given URL path is a Keystatic CMS route.
+ *
+ * Use this to disable prerendering for Keystatic API routes in the `kit.prerender.handleHttpError()` function in your `svelte.config.js`.
+ * This can also be combined with other logic.
+ *
+ * Learn more: https://svelte.dev/docs/kit/configuration#prerender
+ *
+ * @example
+ * ```ts
+ * handleHttpError({ path, message }) {
+ *    // Ignore prerendering errors for Keystatic CMS since it's a SPA that only supports CSR.
+ *    if (isKeystaticRoute(path)) return
+ *
+ *   // Fail the build in other cases.
+ *   throw new Error(message)
+ * }
+ * ```
+ */
+export const isKeystaticRoute = (path: string) => isKeystaticPath.test(path)

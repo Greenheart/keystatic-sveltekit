@@ -1,7 +1,9 @@
+import { type Config } from '@sveltejs/kit'
 import adapter from '@sveltejs/adapter-auto'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { markdocPreprocess } from 'markdoc-svelte'
 import { glob } from 'node:fs/promises'
+import { isKeystaticRoute } from './src/lib/keystatic/index.ts'
 
 export async function getPrerenderEntries() {
   const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap((file) =>
@@ -12,7 +14,6 @@ export async function getPrerenderEntries() {
   return [posts].flat()
 }
 
-/** @type {import('@sveltejs/kit').Config} */
 const config = {
   extensions: ['.svelte', '.mdoc', '.md'],
   preprocess: [vitePreprocess(), markdocPreprocess()],
@@ -20,17 +21,15 @@ const config = {
     adapter: adapter(),
     prerender: {
       entries: ['*', await getPrerenderEntries()].flat(),
-      // TODO: Extract this into a function that can be imported from the integration
-      // Document how and when to use it
-      handleHttpError: ({ path, message }) => {
-        // Ignore prerendering errors for the CMS since it's a SPA
-        if (path.startsWith('/keystatic')) return
+      handleHttpError({ path, message }) {
+        // Ignore prerendering errors for Keystatic CMS since it's a SPA that only supports CSR.
+        if (isKeystaticRoute(path)) return
 
         // Fail the build in other cases.
         throw new Error(message)
       },
     },
   },
-}
+} satisfies Config
 
 export default config
