@@ -208,14 +208,7 @@ export function keystatic(): Plugin {
           // This might be possible to remove in a preprocessing step or by patching Keystatic
           // Ideally we should be able to could configure (or force) keystatic to use the same host as the Vite server.
           ...(config.server?.host ? {} : { host: '127.0.0.1' }),
-          // fs: {
-          //   // This is required to allow the Keystatic frontend to import the keystatic config
-          //   allow: ['./keystatic.config.ts'],
-          // },
         },
-        // optimizeDeps: {
-        //   entries: ['keystatic.config.*'],
-        // },
       }
     },
   }
