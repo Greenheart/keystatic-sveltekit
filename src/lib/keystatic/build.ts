@@ -5,7 +5,8 @@ import { resolve } from 'node:path'
 
 // TODO: We likely can't assume that the project root is process.cwd() in more complex project setups
 // If this happens, we need a better way to consistently resolve the root package.json
-// We could let the user specify which root directory to use when creating the keystatic vite plugin.
+// IDEA: If this becomes a real need, then we could let the user specify which root directory to use
+// when creating the keystatic vite plugin.
 // This projectRoot option could then be passed down to the build process.
 const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
@@ -13,6 +14,8 @@ const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 const virtualConfig = 'virtual:keystatic.config'
 
 async function buildCMS() {
+  // IDEA: Maybe we could prevent writing the output to rename the files directly?
+  // In that case, we could output to the right places with the right names directly.
   await build({
     appType: 'spa',
     logLevel: 'error',
