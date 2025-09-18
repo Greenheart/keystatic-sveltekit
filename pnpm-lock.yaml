@@ -14,9 +14,6 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.0.3
         version: 5.0.3(vite@7.1.5(@types/node@24.5.1)(yaml@2.8.1))
-      esbuild:
-        specifier: ^0.25.10
-        version: 0.25.10
       markdoc-svelte:
         specifier: ^3.0.0
         version: 3.0.0(@types/react@19.1.13)(react@19.1.1)(svelte@5.38.10)(vite@7.1.5(@types/node@24.5.1)(yaml@2.8.1))
@@ -36,9 +33,6 @@ importers:
       '@types/node':
         specifier: ^24.5.1
         version: 24.5.1
-      '@types/react-dom':
-        specifier: ^19.1.9
-        version: 19.1.9(@types/react@19.1.13)
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -57,9 +51,6 @@ importers:
       svelte-check:
         specifier: ^4.3.1
         version: 4.3.1(picomatch@4.0.3)(svelte@5.38.10)(typescript@5.9.2)
-      svelte-preprocess-react:
-        specifier: ^2.1.4
-        version: 2.1.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.38.10)
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
@@ -1221,11 +1212,6 @@ packages:
   '@types/parse-json@4.0.2':
     resolution: {integrity: sha512-dISoDXWWQwUquiKsyZ4Ng+HX2KsPL7LyHKHQwgGFEA3IaKac4Obd+h2a/a6waisAoepJlBcx9paWqjA8/HVjCw==}
 
-  '@types/react-dom@19.1.9':
-    resolution: {integrity: sha512-qXRuZaOsAdXKFyOhRBg6Lqqc0yay13vN7KrIg4L7N4aaHN68ma9OK3NE1BoDFgFOTfM7zg+3/8+2n8rLUH3OKQ==}
-    peerDependencies:
-      '@types/react': ^19.0.0
-
   '@types/react@19.1.13':
     resolution: {integrity: sha512-hHkbU/eoO3EG5/MZkuFSKmYqPbSVk5byPFa3e7y/8TybHiLMACgI8seVYlicwk7H5K/rI2px9xrQp/C+AUDTiQ==}
 
@@ -1434,9 +1420,6 @@ packages:
 
   estree-util-visit@2.0.0:
     resolution: {integrity: sha512-m5KgiH85xAhhW8Wta0vShLcUvOsh3LLPI2YVwcbio1l7E09NTLL1EyMZFM1OyWowoH0skScNbhOPl4kcBgzTww==}
-
-  estree-walker@3.0.3:
-    resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
 
   event-target-shim@6.0.2:
     resolution: {integrity: sha512-8q3LsZjRezbFZ2PN+uP+Q7pnHUMmAOziU2vA2OwoFaKIXxlxl38IylhSSgUorWu/rf4er67w0ikBqjBFk/pomA==}
@@ -1943,13 +1926,6 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
-
-  svelte-preprocess-react@2.1.4:
-    resolution: {integrity: sha512-dOJEKB8cMMN7CSkOdzHFlK60GgpwFqgl0uRaaWTCM52qIIfV26BFayqRa+0cH8SH8XsvHT95TLmemQCjJQZkYQ==}
-    peerDependencies:
-      react: '>=16.8.0'
-      react-dom: '>=16.8.0'
-      svelte: '>=5.36.8'
 
   svelte@5.38.10:
     resolution: {integrity: sha512-UY+OhrWK7WI22bCZ00P/M3HtyWgwJPi9IxSRkoAE2MeAy6kl7ZlZWJZ8RaB+X4KD/G+wjis+cGVnVYaoqbzBqg==}
@@ -3786,10 +3762,6 @@ snapshots:
 
   '@types/parse-json@4.0.2': {}
 
-  '@types/react-dom@19.1.9(@types/react@19.1.13)':
-    dependencies:
-      '@types/react': 19.1.13
-
   '@types/react@19.1.13':
     dependencies:
       csstype: 3.1.3
@@ -3994,10 +3966,6 @@ snapshots:
     dependencies:
       '@types/estree-jsx': 1.0.5
       '@types/unist': 3.0.3
-
-  estree-walker@3.0.3:
-    dependencies:
-      '@types/estree': 1.0.8
 
   event-target-shim@6.0.2: {}
 
@@ -4722,14 +4690,6 @@ snapshots:
       typescript: 5.9.2
     transitivePeerDependencies:
       - picomatch
-
-  svelte-preprocess-react@2.1.4(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(svelte@5.38.10):
-    dependencies:
-      estree-walker: 3.0.3
-      magic-string: 0.30.19
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
-      svelte: 5.38.10
 
   svelte@5.38.10:
     dependencies:

@@ -116,8 +116,6 @@ export async function handleKeystatic(
   }
 }
 
-// IDEA: Maybe move this to the keystatic SvelteKit plugin instead?
-// IDEA: Maybe only apply this to the keystatic modules?
 function ensureGDPRCompliantFonts(): Plugin {
   const fontsURLRegex = /fonts\.googleapis\.com\/css2/g
   const replacement = 'fonts.bunny.net/css'
@@ -140,6 +138,8 @@ export function keystatic(): Plugin {
 
   /** The project root directory */
   let projectRoot = ''
+  /** Where the cms will be served from */
+  let cmsOutDir = ''
   /** The development build is saved here */
   let devDir = ''
   /** The production build is saved here */
