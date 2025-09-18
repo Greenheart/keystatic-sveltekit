@@ -249,9 +249,6 @@ export function keystatic(): Plugin {
     },
     async config(config) {
       if (buildMode === 'prio') {
-        // TODO: Figure out why we run two builds. See if we can limit it to only run once.
-        // Perhaps by only allowing the build to start in the first 10 seconds?
-        // Or perhaps we need a file with build info?
         console.log('[keystatic-sveltekit] Building Keystatic CMS...')
         await buildCMS()
       } else if (buildMode) {
