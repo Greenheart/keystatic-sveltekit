@@ -70,11 +70,10 @@ export async function handleKeystatic(
     })
 
     return async (event: RequestEvent) => {
-      const { building, dev } = await import('$app/environment')
-      console.log('Request:', { building, dev })
-
-      // TODO: Verify this works as expected
+      const { building } = await import('$app/environment')
       if (building) {
+        // Throwing an HTTP error to triggers the `handleHttpError()` in `svelte.config.ts`
+        // where we can prevent prerendering for the CMS
         throw error(400, 'Prerendering is disabled for Keystatic CMS')
       }
       // IDEA: Use {building} from '$app/environment' to determine if we are prerenering the app
