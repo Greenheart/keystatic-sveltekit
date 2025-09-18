@@ -110,15 +110,23 @@ export async function handleKeystatic(
   }
 }
 
+type BuildMode = 'prio' | boolean
+
 /**
  * Only (re)build the CMS when it makes sense.
  * This is a simple way to save resources during development,
  * while building for the actual production build, but not when serving.
  */
-function shouldBuildCMS(env: ConfigEnv) {
-  if (env.mode === 'production' && env.command === 'serve') {
-    return false
-  } else if (env.mode === 'development' && process.uptime() > 30) {
+function getBuildMode(env: ConfigEnv): BuildMode {
+  if (env.mode !== 'development') {
+    if (env.command === 'build') {
+      // In production builds, we want to finish the CMS build before other parts of the app
+      // This makes sure the following steps work as expected.
+      return 'prio'
+    } else {
+      return false
+    }
+  } else if (process.uptime() > 30) {
     // Avoid (re)building the CMS if the Vite dev server has been running for a while already.
     // Technically, we mostly only need to rebuild when dependencies have changed.
     return false
@@ -190,14 +198,7 @@ export function keystatic(): Plugin {
       prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
       cmsOutDir = env.mode !== 'development' ? prodDir : devDir
-
-      // In production builds, we want to finish the CMS build before other parts of the app
-      // This makes sure the following steps work as expected.
-      if (shouldBuildCMS(env) && env.mode === 'production') {
-        buildMode = 'prio'
-      } else {
-        buildMode = true
-      }
+      buildMode = getBuildMode(env)
 
       return true
     },
