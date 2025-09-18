@@ -15,7 +15,7 @@ import { type Plugin, build } from 'vite'
 /**
  * Wait until a condition is true.
  */
-function until(isReady: () => Promise<boolean>, checkInterval = 100, timeout = 30_000) {
+function until(isReady: () => boolean | Promise<boolean>, checkInterval = 100, timeout = 30_000) {
   const initial = Date.now()
   return new Promise<void>((resolve, reject) => {
     let interval = setInterval(async () => {
@@ -145,7 +145,7 @@ export function keystatic(): Plugin {
   /** The production build is saved here */
   let prodDir = ''
   /** Resolves to a Set with all filenames of the latest CMS frontend build */
-  let frontendBuildAssets: Promise<Set<string> | null> | null = null
+  let frontendBuildAssets: Promise<null | undefined> | null = null
   let shouldBuild = true
 
   // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
@@ -202,21 +202,7 @@ export function keystatic(): Plugin {
     // These filesystem-tasks need to happen in order since they work with the same files
     await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
     await mkdir(prodDir, { recursive: true })
-    // NOTE: Sometimes copying fails on rapid succesive builds. This might be avoided by only building in the beginning.
     await cp(devDir, prodDir, { recursive: true })
-
-    function getFileNames(result: Awaited<ReturnType<typeof build>>) {
-      if ('output' in result) {
-        return result.output.map(({ fileName }) => fileName)
-      } else if (Array.isArray(result)) {
-        return result.flatMap(({ output }) => output.map(({ fileName }) => fileName))
-      }
-      throw new Error('[keystatic-sveltekit] Unexpected output from CMS build: \n' + result)
-    }
-
-    return new Set(
-      getFileNames(result).map((name) => (/\.html$/.test(name) ? 'keystatic.html' : name)),
-    )
   }
 
   return {
