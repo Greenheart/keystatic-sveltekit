@@ -9,7 +9,7 @@ import { type ConfigEnv, type Plugin } from 'vite'
 /**
  * Wait until a condition is true.
  */
-function until(isReady: () => boolean | Promise<boolean>, checkInterval = 100, timeout = 30_000) {
+function until(isReady: () => boolean | Promise<boolean>, checkInterval = 400, timeout = 15_000) {
   const initial = Date.now()
   return new Promise<void>((resolve, reject) => {
     let interval = setInterval(async () => {
@@ -47,10 +47,29 @@ export async function handleKeystatic(
     // Instead of checking if we have the latest version, we simply read the latest matching file for every request
     await until(async () => {
       const entries = await readdir(cmsOutDir, 'utf-8')
+      // TODO: Find a better way to detect changes in production.
+      // We need to wait for the build to finish, but not delay further than necessary
+      // Looking at the log output, it seems like we need to enforce execution at the very last moment, so our build output doesn't get overwritten by SvelteKit
+      // We could also consider if we want to block the build at the start, or do it in parallell with SvelteKit and detect once that build is completed.
+      // If we could run the build last, that would be great. Otherwise we could watch the directories for changes
+      console.log(entries)
       return entries.includes('keystatic.html')
     })
 
     return async (event: RequestEvent) => {
+      // IDEA: Use {building} from '$app/environment' to determine if we are prerenering the app
+      // IDEA: throw an error and use the handleHttpError to disable prerendering for keystatic routes
+      // since we can't specify the prerender option in other ways from our hook.
+      // IDEA: Disable prerendering in the root layout and re-enable everywhere.
+      // --> this could require significant changes to the project routing
+      // IDEA: Disable the crawler and explicitly add all prerendering entries
+      // --> this could require significant work as well, especially for larger sites
+      // IDEA: We could export a function which could be added to `kit.prerender.handleHttpError`,
+      // or called within your wrapping function if you need a more advanced alternative.
+      // Conclusion: This is the simplest solution, since you would just have to add this function, and would be
+      // free to keep your existing app structure apart from that. In the future, it might be possible to
+      // enable/disable prerendering when injecting routes from integrations/plugins.
+
       // By serving the HTML response separately from the JS bundle, we can keep the JS cached in the browser,
       // since the same bundle is referenced by all pages. This improves performance for subsequent CMS page loads.
       if (event.url.pathname.endsWith('js')) {
@@ -204,6 +223,10 @@ export function keystatic(): Plugin {
     },
     async config(config) {
       if (buildMode === 'prio') {
+        // TODO: Figure out why we run two builds. See if we can limit it to only run once.
+        // Perhaps by only allowing the build to start in the first 10 seconds?
+        // Or perhaps we need a file with build info?
+        console.log('[keystatic-sveltekit] Building Keystatic CMS...')
         await buildCMS()
       } else if (buildMode) {
         buildCMS()

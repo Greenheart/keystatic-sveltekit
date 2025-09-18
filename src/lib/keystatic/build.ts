@@ -11,8 +11,6 @@ const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 const virtualConfig = 'virtual:keystatic.config'
 
 async function buildCMS() {
-  // console.info('[keystatic-sveltekit] Building Keystatic CMS...')
-
   await build({
     appType: 'spa',
     logLevel: 'error',

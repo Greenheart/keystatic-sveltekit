@@ -20,6 +20,15 @@ const config = {
     adapter: adapter(),
     prerender: {
       entries: ['*', await getPrerenderEntries()].flat(),
+      // TODO: Extract this into a function that can be imported from the integration
+      // Document how and when to use it
+      handleHttpError: ({ path, message }) => {
+        // Ignore prerendering errors for the CMS since it's a SPA
+        if (path.startsWith('/keystatic')) return
+
+        // Fail the build in other cases.
+        throw new Error(message)
+      },
     },
   },
 }
