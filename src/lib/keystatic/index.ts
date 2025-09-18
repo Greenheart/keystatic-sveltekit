@@ -1,5 +1,5 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
-import type { Handle, RequestEvent } from '@sveltejs/kit'
+import { error, type Handle, type RequestEvent } from '@sveltejs/kit'
 import { exec } from 'node:child_process'
 import { readdir, readFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
@@ -58,6 +58,13 @@ export async function handleKeystatic(
     })
 
     return async (event: RequestEvent) => {
+      const { building, dev } = await import('$app/environment')
+      console.log('Request:', { building, dev })
+
+      // TODO: Verify this works as expected
+      if (building) {
+        throw error(400, 'Prerendering is disabled for Keystatic CMS')
+      }
       // IDEA: Use {building} from '$app/environment' to determine if we are prerenering the app
       // IDEA: throw an error and use the handleHttpError to disable prerendering for keystatic routes
       // since we can't specify the prerender option in other ways from our hook.
