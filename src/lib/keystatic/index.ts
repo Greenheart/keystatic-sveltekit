@@ -1,7 +1,7 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit'
 import { exec } from 'node:child_process'
-import { readdir, readFile } from 'node:fs/promises'
+import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { type ConfigEnv, type Plugin } from 'vite'
@@ -40,21 +40,33 @@ export async function handleKeystatic(
   const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
   const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
   const cmsOutDir = process.env.NODE_ENV !== 'development' ? prodDir : devDir
-  const htmlFile = resolve(cmsOutDir, 'keystatic.html')
+  const cmsHTMLFileName = 'keystatic.html'
+  const htmlFile = resolve(cmsOutDir, cmsHTMLFileName)
 
   async function initCMS() {
     // Wait until we have some build result to show.
     // This is especially important for the very first dev or production builds.
     // Instead of checking if we have the latest version, we simply read the latest matching file for every request
     await until(async () => {
-      const entries = await readdir(cmsOutDir, 'utf-8')
+      let entries = await readdir(cmsOutDir, 'utf-8')
       // TODO: Find a better way to detect changes in production.
       // We need to wait for the build to finish, but not delay further than necessary
       // Looking at the log output, it seems like we need to enforce execution at the very last moment, so our build output doesn't get overwritten by SvelteKit
       // We could also consider if we want to block the build at the start, or do it in parallell with SvelteKit and detect once that build is completed.
       // If we could run the build last, that would be great. Otherwise we could watch the directories for changes
-      console.log(entries)
-      return entries.includes('keystatic.html')
+      let hasCMSFiles = entries.includes(cmsHTMLFileName)
+
+      if (!hasCMSFiles) {
+        // Try copying the files over again.
+        // This usually happens after the SvelteKit build has finished.
+        await mkdir(cmsOutDir, { recursive: true })
+        await cp(devDir, cmsOutDir, { recursive: true })
+
+        entries = await readdir(cmsOutDir, 'utf-8')
+        hasCMSFiles = entries.includes(cmsHTMLFileName)
+      }
+
+      return hasCMSFiles
     })
 
     return async (event: RequestEvent) => {
