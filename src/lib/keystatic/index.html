@@ -4,6 +4,17 @@
     <meta charset="utf-8" />
     <link rel="icon" href="data:," />
     <title>Keystatic</title>
+    <style>
+      /*
+       * Ensure dark theme is applied even before the SPA loads.
+       * This improves the perceived performance.
+       */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #252525;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
