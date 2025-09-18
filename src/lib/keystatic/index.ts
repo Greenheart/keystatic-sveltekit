@@ -45,20 +45,14 @@ export async function handleKeystatic(
 
   async function initCMS() {
     // Wait until we have some build result to show.
-    // This is especially important for the very first dev or production builds.
-    // Instead of checking if we have the latest version, we simply read the latest matching file for every request
+    // This is especially important for the first dev and production builds.
     await until(async () => {
       let entries = await readdir(cmsOutDir, 'utf-8')
-      // TODO: Find a better way to detect changes in production.
-      // We need to wait for the build to finish, but not delay further than necessary
-      // Looking at the log output, it seems like we need to enforce execution at the very last moment, so our build output doesn't get overwritten by SvelteKit
-      // We could also consider if we want to block the build at the start, or do it in parallell with SvelteKit and detect once that build is completed.
-      // If we could run the build last, that would be great. Otherwise we could watch the directories for changes
       let hasCMSFiles = entries.includes(cmsHTMLFileName)
 
       if (!hasCMSFiles) {
-        // Try copying the files over again.
-        // This usually happens after the SvelteKit build has finished.
+        // Sometimes the CMS files are missing, and in those cases we can try to recover the situation.
+        // During the production build, we usually need to copy our output once SvelteKit has finished building.
         await mkdir(cmsOutDir, { recursive: true })
         await cp(devDir, cmsOutDir, { recursive: true })
 
@@ -76,18 +70,6 @@ export async function handleKeystatic(
         // where we can prevent prerendering for the CMS
         throw error(400, 'Prerendering is disabled for Keystatic CMS')
       }
-      // IDEA: Use {building} from '$app/environment' to determine if we are prerenering the app
-      // IDEA: throw an error and use the handleHttpError to disable prerendering for keystatic routes
-      // since we can't specify the prerender option in other ways from our hook.
-      // IDEA: Disable prerendering in the root layout and re-enable everywhere.
-      // --> this could require significant changes to the project routing
-      // IDEA: Disable the crawler and explicitly add all prerendering entries
-      // --> this could require significant work as well, especially for larger sites
-      // IDEA: We could export a function which could be added to `kit.prerender.handleHttpError`,
-      // or called within your wrapping function if you need a more advanced alternative.
-      // Conclusion: This is the simplest solution, since you would just have to add this function, and would be
-      // free to keep your existing app structure apart from that. In the future, it might be possible to
-      // enable/disable prerendering when injecting routes from integrations/plugins.
 
       // By serving the HTML response separately from the JS bundle, we can keep the JS cached in the browser,
       // since the same bundle is referenced by all pages. This improves performance for subsequent CMS page loads.
@@ -198,7 +180,7 @@ function getBuildMode(env: ConfigEnv): BuildMode {
 async function buildCMS() {
   const { stdout, stderr } = await promisify(exec)(
     `node ${resolve(import.meta.dirname, 'build.ts')}`,
-    // Ensure we build with the React production build to create the best possible experience
+    // Ensure we build with the React production bundle to create the best possible experience
     // when using Keystatic CMS both locally and in production.
     { env: { NODE_ENV: 'production' } },
   )
@@ -220,39 +202,16 @@ export function keystatic(): Plugin {
   let prodDir = ''
   let buildMode: 'prio' | boolean = false
 
-  // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
-  // NOTE: When building the Keystatic CMS frontend, we could use process.env.NODE_ENV to either
-  // 1) during development, output to the tmp directory in node_modules (during dev)
-  // 2) during production, build to the static directory (after SvelteKit) has been built.
-  // basically this just determines where the CMS frontend is stored, and from where it is served.
-  // If this works, we could then serve the built assets.
-  // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
-
   return {
     name: 'keystatic-sveltekit',
     apply(config, env) {
-      // TODO: detect if we are running in production or not
-      // detect if we are serving the app or not
-
-      // if command === build and mode production --> then we should use the prod directory
-      // if command === serve and mode production --> then we should use the prod directory
-      // if command === serve and mode development --> then we should use the dev directory
-      // However, this will also happen for prerendering it seems. So we should build to both locations just in case
-      // build to .svelte-kit/output/client/ if it exists. Otherwise, only build to dev.
-
-      // Build during serve and development
-      // Build if command is build, no matter the environment, and build to both locations
-      // During serve and production, we should hopefully be able to only serve, and if not fall back to build again
-
-      // Conclusion 1: Always build to node_modules
-      // Conslusion 2: Always copy the fresh build to .svelte-kit/output/client/ if the directory exists.
-      // If command === serve and mode === production --> then serve from the prod directory
-
       projectRoot = config.root ?? process.cwd()
 
       devDir = resolve(projectRoot, '.svelte-kit/keystatic')
       prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
+      // We always build to both the development and prod directories
+      // However, in production, it's important to serve from the production directory since that's included in the build
       cmsOutDir = env.mode !== 'development' ? prodDir : devDir
       buildMode = getBuildMode(env)
 
