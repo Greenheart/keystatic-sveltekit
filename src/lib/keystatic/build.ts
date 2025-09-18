@@ -3,6 +3,8 @@ import viteReact from '@vitejs/plugin-react'
 import { cp, mkdir, rename } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
+// TODO: We likely can't assume that the project root is process.cwd() in more complex project setups
+// If this happens, we need a better way to consistently resolve the root package.json
 const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
