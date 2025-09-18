@@ -154,7 +154,7 @@ export function keystatic(): Plugin {
   let devDir = ''
   /** The production build is saved here */
   let prodDir = ''
-  let shouldBuild = false
+  let buildMode: 'prio' | boolean = false
 
   // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
   // NOTE: When building the Keystatic CMS frontend, we could use process.env.NODE_ENV to either
@@ -191,12 +191,22 @@ export function keystatic(): Plugin {
 
       cmsOutDir = env.mode !== 'development' ? prodDir : devDir
 
-      shouldBuild = shouldBuildCMS(env)
+      // In production builds, we want to finish the CMS build before other parts of the app
+      // This makes sure the following steps work as expected.
+      if (shouldBuildCMS(env) && env.mode === 'production') {
+        buildMode = 'prio'
+      } else {
+        buildMode = true
+      }
 
       return true
     },
     async config(config) {
-      if (shouldBuild) buildCMS()
+      if (buildMode === 'prio') {
+        await buildCMS()
+      } else if (buildMode) {
+        buildCMS()
+      }
 
       return {
         server: {
