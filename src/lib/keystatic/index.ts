@@ -237,49 +237,24 @@ export async function handleKeystatic(
   const htmlFile = resolve(cmsOutDir, 'keystatic.html')
 
   async function initCMS() {
-    // Wait until the build has finished after the most recent server restart
+    // Wait until we have some build result to show.
+    // This is especially important for the very first dev or production builds.
+    // Instead of checking if we have the latest version, we simply read the latest matching file for every request
     await until(async () => {
       const entries = await readdir(cmsOutDir, 'utf-8')
       return entries.includes('keystatic.html')
     })
 
     return async (event: RequestEvent) => {
-      // read from the cmsOutDir and serve assets
-      // Either bundle everything as one big HTML file which is easier to serve
-      // Also, even though the initial page load is slower, we will get a better performance on subsequent CMS page loads
-      // since the JS bundle will be cached, and the HTML response is very lightweight
-
-      // TODO: if the request is for a JS file and it does not exist, try refreshing the page
-
-      // In this function, we already know the request is for the CMS frontend
-      // console.log(event.url.pathname, assets)
-
-      // TODO: Test if url is included in the manifest of built assets for the CMS
-      // if (event.url.pathname)
-
-      // const jsFile = event.url.pathname.match(/\/(.+)\.js$/)?.[1]
-
-      const jsFile = event.url.pathname.match(/[^/\\&\?]+\.js(?=([\?&].*$|$))/)?.[1]
-
-      console.log(jsFile)
-
-      if (jsFile) {
-        return new Response(await readFile(resolve(cmsOutDir, jsFile), 'utf-8'), {
-          headers: { 'Content-Type': 'application/javascript' },
-        })
+      // By serving the HTML response separately from the JS bundle, we can keep the JS cached in the browser,
+      // since the same bundle is referenced by all pages. This improves performance for subsequent CMS page loads.
+      if (event.url.pathname.endsWith('js')) {
+        return new Response(
+          await readFile(resolve(cmsOutDir, basename(event.url.pathname)), 'utf-8'),
+          { headers: { 'Content-Type': 'application/javascript' } },
+        )
       }
-      // if (event.url.pathname.endsWith('js')) {
-      //   return new Response(
-      //     await readFile(resolve(cmsOutDir, basename(event.url.pathname)), 'utf-8'),
-      //     { headers: { 'Content-Type': 'application/javascript' } },
-      //   )
-      // }
 
-      // If included, serve, else throw 404
-
-      // return new Response('<body style="background:#1c1e22;color:#fff">CMS</body>', {
-      //   headers: { 'Content-Type': 'text/html' },
-      // })
       return new Response(await readFile(htmlFile), {
         headers: { 'Content-Type': 'text/html' },
       })
