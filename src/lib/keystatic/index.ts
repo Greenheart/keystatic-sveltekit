@@ -137,6 +137,11 @@ export async function handleKeystatic(
   }
 }
 
+declare global {
+  /** Used to ensure the CMS is only built at most once per `vite` command executed */
+  var HAS_CMS_BUILD_STARTED: boolean | undefined
+}
+
 type BuildMode = 'prio' | boolean
 
 /**
@@ -145,19 +150,32 @@ type BuildMode = 'prio' | boolean
  * while building for the actual production build, but not when serving.
  */
 function getBuildMode(env: ConfigEnv): BuildMode {
+  // console.log('Determining buildMode', process.uptime(), globalThis.HAS_CMS_BUILD_STARTED)
+
+  // Since globalThis is kept for the same Vite parent process that restarts the build,
+  // and because both the Vite config loading and the SvelteKit dev/build process run in the same process,
+  // We can use a nullish coalescing assignment (??=) to reliably determine if there has been a previous build.
+  globalThis.HAS_CMS_BUILD_STARTED ??= true
+
+  // Avoid duplicate builds in the same execution of the `vite` command.
+  // We only need to rebuild the CMS when dependencies have changed,
+  // and a simple solution is to build the CMS the first time the Vite dev server or production build starts.
+  if (globalThis.HAS_CMS_BUILD_STARTED) {
+    return false
+  }
+
   if (env.mode !== 'development') {
     if (env.command === 'build') {
       // In production builds, we want to finish the CMS build before other parts of the app
       // This makes sure the following steps work as expected.
       return 'prio'
     } else {
+      // Don't build when serving in production - in those cases the CMS should already be built.
       return false
     }
-  } else if (process.uptime() > 30) {
-    // Avoid (re)building the CMS if the Vite dev server has been running for a while already.
-    // Technically, we mostly only need to rebuild when dependencies have changed.
-    return false
   }
+
+  // Build the first time during development
   return true
 }
 
