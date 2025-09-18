@@ -145,7 +145,7 @@ export function keystatic(): Plugin {
   /** The production build is saved here */
   let prodDir = ''
   /** Resolves to a Set with all filenames of the latest CMS frontend build */
-  let frontendBuildAssets: Promise<Set<string>> | null = null
+  let frontendBuildAssets: Promise<Set<string> | null> | null = null
   let shouldBuild = true
 
   // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
@@ -159,14 +159,17 @@ export function keystatic(): Plugin {
   async function buildCMS() {
     // console.info('[keystatic-sveltekit] Building Keystatic CMS...')
 
-    // If we build this in a child process, we might be able to override process.env.NODE_ENV to force the usage of the production react code
-    // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
-    // TODO: Building in a child_process would improve performance for the first incoming request (except for those coming to Keystatic)  since it would avoid blocking the main thread.
+    // Only rebuild the CMS when the Vite process recently started.
+    // This is a simple way to save resources during development.
+    if (process.env.NODE_ENV === 'development' && process.uptime() > 30) {
+      return frontendBuildAssets
+    }
 
-    // IDEA: Another improvement would be to limit re-builds, since they technically only need to happen when
-    // CMS dependencies change, rather than on every Vite server restart
-    // We could potentially include a script in the package
-    // Or we could check the modified time to make sure it has passed at least 10 minutes or more before rebuilding.
+    // If we build this in a child process, we might be able to override process.env.NODE_ENV to
+    // force the usage of the production react code
+    // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
+    // TODO: Building in a child_process would improve performance for the first incoming request
+    // (except for those coming to Keystatic)  since it would avoid blocking the main thread.
     const result = await build({
       appType: 'spa',
       logLevel: 'error',
@@ -199,6 +202,7 @@ export function keystatic(): Plugin {
     // These filesystem-tasks need to happen in order since they work with the same files
     await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
     await mkdir(prodDir, { recursive: true })
+    // NOTE: Sometimes copying fails on rapid succesive builds. This might be avoided by only building in the beginning.
     await cp(devDir, prodDir, { recursive: true })
 
     function getFileNames(result: Awaited<ReturnType<typeof build>>) {
