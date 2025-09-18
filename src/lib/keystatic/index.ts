@@ -1,16 +1,10 @@
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import type { Handle, RequestEvent } from '@sveltejs/kit'
-import viteReact from '@vitejs/plugin-react'
-import { cp, mkdir, readdir, readFile, rename } from 'node:fs/promises'
+import { exec } from 'node:child_process'
+import { readdir, readFile } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import { type Plugin, build } from 'vite'
-
-// IDEA: Or maybe a simpler alternative: use simple exported functions and let the hook poll for changes in the file system
-// Maybe write a temp file when starting the vite plugin, and update it whenever changes occur?
-// Write a manifest file that the hook handler can use.
-// If the file does not exist, wait until it does
-// If the file exists but the entries specified in it do not, then wait a while and try again. If it still fails after 30 seconds, throw an error.
-// In the vite plugin, whenever a new build starts, empty the file and write the updatedAt timestamp as well as an empty array of entries
+import { promisify } from 'node:util'
+import { type ConfigEnv, type Plugin } from 'vite'
 
 /**
  * Wait until a condition is true.
@@ -44,7 +38,7 @@ export async function handleKeystatic(
   const projectRoot = process.cwd()
   const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
   const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
-  const cmsOutDir = !import.meta.env.DEV ? prodDir : devDir
+  const cmsOutDir = process.env.NODE_ENV !== 'development' ? prodDir : devDir
   const htmlFile = resolve(cmsOutDir, 'keystatic.html')
 
   async function initCMS() {
@@ -116,26 +110,42 @@ export async function handleKeystatic(
   }
 }
 
-function ensureGDPRCompliantFonts(): Plugin {
-  const fontsURLRegex = /fonts\.googleapis\.com\/css2/g
-  const replacement = 'fonts.bunny.net/css'
-  return {
-    name: 'gdpr-compliant-fonts',
-    enforce: 'post',
-    transform(code) {
-      if (fontsURLRegex.test(code)) {
-        return code.replaceAll(fontsURLRegex, replacement)
-      }
-    },
+/**
+ * Only (re)build the CMS when it makes sense.
+ * This is a simple way to save resources during development,
+ * while building for the actual production build, but not when serving.
+ */
+function shouldBuildCMS(env: ConfigEnv) {
+  if (env.mode === 'production' && env.command === 'serve') {
+    return false
+  } else if (env.mode === 'development' && process.uptime() > 30) {
+    // Avoid (re)building the CMS if the Vite dev server has been running for a while already.
+    // Technically, we mostly only need to rebuild when dependencies have changed.
+    return false
   }
+  return true
+}
+
+/**
+ * Build the CMS frontend in a separate process.
+ *
+ * This allows the rest of the dev server to start up without noticeable delay.
+ */
+async function buildCMS() {
+  const { stdout, stderr } = await promisify(exec)(
+    `node ${resolve(import.meta.dirname, 'build.ts')}`,
+    // Ensure we build with the React production build to create the best possible experience
+    // when using Keystatic CMS both locally and in production.
+    { env: { NODE_ENV: 'production' } },
+  )
+  if (stdout) console.log(stdout)
+  if (stderr) console.error(stderr)
 }
 
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
 export function keystatic(): Plugin {
-  const virtualConfig = 'virtual:keystatic.config'
-
   /** The project root directory */
   let projectRoot = ''
   /** Where the cms will be served from */
@@ -144,9 +154,7 @@ export function keystatic(): Plugin {
   let devDir = ''
   /** The production build is saved here */
   let prodDir = ''
-  /** Resolves to a Set with all filenames of the latest CMS frontend build */
-  let frontendBuildAssets: Promise<null | undefined> | null = null
-  let shouldBuild = true
+  let shouldBuild = false
 
   // console.log('KEYSTATIC ENV', process.env.NODE_ENV)
   // NOTE: When building the Keystatic CMS frontend, we could use process.env.NODE_ENV to either
@@ -155,55 +163,6 @@ export function keystatic(): Plugin {
   // basically this just determines where the CMS frontend is stored, and from where it is served.
   // If this works, we could then serve the built assets.
   // We could use this to conditionally pre-build the CMS, or just serve it: https://vite.dev/guide/api-plugin.html#conditional-application
-
-  async function buildCMS() {
-    // console.info('[keystatic-sveltekit] Building Keystatic CMS...')
-
-    // Only rebuild the CMS when the Vite process recently started.
-    // This is a simple way to save resources during development.
-    if (process.env.NODE_ENV === 'development' && process.uptime() > 30) {
-      return frontendBuildAssets
-    }
-
-    // If we build this in a child process, we might be able to override process.env.NODE_ENV to
-    // force the usage of the production react code
-    // Either in a child process, or maybe Vite or Rollup allow us to do something like that.
-    // TODO: Building in a child_process would improve performance for the first incoming request
-    // (except for those coming to Keystatic)  since it would avoid blocking the main thread.
-    const result = await build({
-      appType: 'spa',
-      logLevel: 'error',
-      base: '/keystatic',
-      mode: 'production',
-      build: {
-        outDir: devDir,
-        emptyOutDir: true,
-        rollupOptions: {
-          output: {
-            entryFileNames: 'keystatic-[hash].js',
-          },
-        },
-      },
-      root: resolve(import.meta.dirname),
-      plugins: [
-        viteReact(),
-        {
-          name: 'resolve-config',
-          resolveId(id) {
-            if (id === virtualConfig) {
-              return this.resolve('./keystatic.config', './a')
-            }
-          },
-        },
-        ensureGDPRCompliantFonts(),
-      ],
-    })
-
-    // These filesystem-tasks need to happen in order since they work with the same files
-    await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
-    await mkdir(prodDir, { recursive: true })
-    await cp(devDir, prodDir, { recursive: true })
-  }
 
   return {
     name: 'keystatic-sveltekit',
@@ -230,24 +189,14 @@ export function keystatic(): Plugin {
       devDir = resolve(projectRoot, '.svelte-kit/keystatic')
       prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
-      if (env.mode === 'production') {
-        if (env.command === 'serve') {
-          shouldBuild = false
-        }
-        cmsOutDir = prodDir
-      } else {
-        cmsOutDir = devDir
-      }
+      cmsOutDir = env.mode !== 'development' ? prodDir : devDir
+
+      shouldBuild = shouldBuildCMS(env)
 
       return true
     },
     async config(config) {
-      if (shouldBuild) {
-        // Start the CMS frontend build, but don't wait for it to finish yet.
-        // This allows the rest of the dev server to start up without noticeable delay.
-        // By keeping the Promise, we only start one build per server restart during development
-        frontendBuildAssets ??= buildCMS()
-      }
+      if (shouldBuild) buildCMS()
 
       return {
         server: {
