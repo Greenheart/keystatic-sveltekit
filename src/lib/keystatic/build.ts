@@ -1,7 +1,7 @@
-import { build, type Plugin } from 'vite'
+import { build, type Plugin, type Rollup } from 'vite'
 import viteReact from '@vitejs/plugin-react'
-import { cp, mkdir, rename } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { cp, mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 
 // TODO: We likely can't assume that the project root is process.cwd() in more complex project setups
 // If this happens, we need a better way to consistently resolve the root package.json
@@ -13,19 +13,25 @@ const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 const virtualConfig = 'virtual:keystatic.config'
 
+async function emptyDir(dir: string) {
+  let items
+  try {
+    items = await readdir(dir)
+  } catch (error) {
+    return mkdir(dir, { recursive: true })
+  }
+
+  return Promise.all(items.map((item) => unlink(join(dir, item))))
+}
+
 async function buildCMS() {
-  // IDEA: Maybe we could prevent writing the output to rename the files directly?
-  // In that case, we could output to the right places with the right names directly.
-  // TODO: Use write:false to only return the bundle.
-  // TODO: write the files manually to disk, to the right locations.
-  await build({
+  const bundle = (await build({
     appType: 'spa',
     logLevel: 'error',
     base: '/keystatic',
     mode: 'production',
     build: {
-      outDir: devDir,
-      emptyOutDir: true,
+      write: false,
       rollupOptions: {
         output: {
           entryFileNames: 'keystatic-[hash].js',
@@ -45,10 +51,26 @@ async function buildCMS() {
       },
       ensureGDPRCompliantFonts(),
     ],
-  })
+  })) as Rollup.RollupOutput
 
-  // These filesystem tasks need to happen in order since they work with the same files
-  await rename(resolve(devDir, 'index.html'), resolve(devDir, 'keystatic.html'))
+  if (!bundle.output) {
+    console.dir(bundle)
+    throw new Error('[keystatic-sveltekit] Unexpected output format')
+  }
+
+  await emptyDir(devDir)
+
+  // Output files directly with their expected filenames
+  await Promise.all(
+    bundle.output.map((file) =>
+      writeFile(
+        resolve(devDir, file.fileName.endsWith('.html') ? 'keystatic.html' : file.fileName),
+        'code' in file ? file.code : file.source,
+        'utf-8',
+      ),
+    ),
+  )
+
   await mkdir(prodDir, { recursive: true })
   await cp(devDir, prodDir, { recursive: true })
 }
