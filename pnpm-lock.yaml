@@ -4,13 +4,18 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@keystatic/core':
+    hash: bface515406585d38f76f983725774b3010523ab7dfb3d0eb98cc649316db57c
+    path: patches/@keystatic__core.patch
+
 importers:
 
   .:
     dependencies:
       '@keystatic/core':
         specifier: ^0.5.48
-        version: 0.5.48(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        version: 0.5.48(patch_hash=bface515406585d38f76f983725774b3010523ab7dfb3d0eb98cc649316db57c)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       '@vitejs/plugin-react':
         specifier: ^5.0.3
         version: 5.0.3(vite@7.1.7(@types/node@24.5.2)(yaml@2.8.1))
@@ -2543,7 +2548,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@keystatic/core@0.5.48(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
+  '@keystatic/core@0.5.48(patch_hash=bface515406585d38f76f983725774b3010523ab7dfb3d0eb98cc649316db57c)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       '@babel/runtime': 7.28.4
       '@braintree/sanitize-url': 6.0.4
