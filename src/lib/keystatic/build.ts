@@ -16,6 +16,8 @@ const virtualConfig = 'virtual:keystatic.config'
 async function buildCMS() {
   // IDEA: Maybe we could prevent writing the output to rename the files directly?
   // In that case, we could output to the right places with the right names directly.
+  // TODO: Use write:false to only return the bundle.
+  // TODO: write the files manually to disk, to the right locations.
   await build({
     appType: 'spa',
     logLevel: 'error',
