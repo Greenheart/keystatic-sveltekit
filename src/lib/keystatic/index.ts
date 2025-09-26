@@ -52,7 +52,7 @@ export async function handleKeystatic(
 
       if (!hasCMSFiles) {
         // Sometimes the CMS files are missing, and in those cases we can try to recover the situation.
-        // During the production build, we usually need to copy our output once SvelteKit has finished building.
+        // During the production build, we need to copy the output after the SvelteKit build has completed.
         await mkdir(cmsOutDir, { recursive: true })
         await cp(devDir, cmsOutDir, { recursive: true })
 
