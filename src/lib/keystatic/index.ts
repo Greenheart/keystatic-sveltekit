@@ -1,3 +1,4 @@
+import type { Config } from '@keystatic/core'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit'
 import { exec } from 'node:child_process'
@@ -200,15 +201,20 @@ export function keystatic(): Plugin {
         buildCMS()
       }
 
+      const keystaticConfig: Config = (
+        await import(/* @vite-ignore */ resolve(projectRoot, 'keystatic.config.ts'))
+      ).default
+
+      if (keystaticConfig.storage.kind !== 'local') {
       return {
         server: {
-          // NOTE: The Keystatic SPA redirects to `127.0.0.1` when it loads, which doesn't work with the default SvelteKit + Vite configs.
-          // Therefore, we need to make the Vite server host `127.0.0.1` to allow the server to be accessed both via localhost and 127.0.0.1
+            // When using a Keystatic storage which uses OAuth (like `github`, `cloud`),
+            // then both the CMS frontend and the API should be served from `127.0.0.1`
+            // By configuring the Vite server host to `127.0.0.1`, we make the server accessible both via `localhost` and `127.0.0.1`.
           // Related issue: https://github.com/Thinkmill/keystatic/issues/366
-          // This might be possible to remove in a preprocessing step or by patching Keystatic
-          // Ideally we should be able to could configure (or force) keystatic to use the same host as the Vite server.
           ...(config.server?.host ? {} : { host: '127.0.0.1' }),
         },
+        }
       }
     },
   }
