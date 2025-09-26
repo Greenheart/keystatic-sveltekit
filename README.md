@@ -5,10 +5,26 @@
 - In order to separate app styles from Keystatic, we use SvelteKit [layout groups](<https://svelte.dev/docs/kit/advanced-routing#Advanced-layouts-(group)>).
   - Once SvelteKit supports [dynamically adding routes](https://github.com/sveltejs/kit/issues/8896), we could remove the need for using layout groups and render keystatic via the SvelteKit [handle](https://svelte.dev/docs/kit/hooks#Server-hooks-handle) hook. This would make it very simple to embed Keystatic within a SvelteKit project since there would no longer be a need to define custom keystatic routes since that would be handled by the `handleKeystatic()` hook.
 
-- IDEA: Document how to only include keystatic during development but not in the production build
-  - the API route should be dynamically imported
-  - the keystatic routes should be disabled during production
-    - Maybe there is a setting to tell SvelteKit to exclude certain routes during build?
+- It's possible to only enable Keystatic in specific environments, like `development`:
+
+```ts
+// src/hooks.server.ts
+import { type Handle, sequence } from '@sveltejs/kit'
+import { sequence } from '@sveltejs/kit/hooks'
+import { dev } from '$app/environment'
+
+// Add your other hooks here
+const hooks: Handle[] = []
+
+// Only enable Keystatic during development
+if (dev) {
+  // Use a dynamic import to reduce the size of the production build.
+  const { handleKeystatic } = await import('$lib/keystatic')
+  hooks.push(await handleKeystatic())
+}
+
+export const handle = sequence(hooks)
+```
 
 ---
 
