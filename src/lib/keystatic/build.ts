@@ -35,6 +35,17 @@ async function buildCMS() {
       rollupOptions: {
         output: {
           entryFileNames: 'keystatic-[hash].js',
+          // IDEA: Maybe use manualChunks from https://github.com/vitejs/vite/discussions/17730
+          // TODO: This doesn't work as expected because the config is included even though it shouldn't be there
+          // IDEA: Maybe we should bundle the config separately, for example with esbuild and then manually add the import
+          // during development. When the module is not registered by Vite, HMR won't work automatically.
+          // However, we might be able to solve it by manually implementing the HMR and sending an update to the keystatic.config.ts module
+          // whenever it changes. Then we could rebuild it separately during dev only.
+          manualChunks: {
+            keystaticConfig: ['virtual:keystatic.config'],
+          },
+          chunkFileNames: 'keystatic-config-[hash].js',
+          // assetFileNames: 'keystatic-asset-[hash].js',
         },
       },
     },
@@ -52,6 +63,14 @@ async function buildCMS() {
       ensureGDPRCompliantFonts(),
     ],
   })) as Rollup.RollupOutput
+
+  // See if the config module can be output separately somehow
+  console.dir(bundle.output.map((f) => f.fileName))
+
+  // IDEA: Try to use the manualChunks to make the config into a separate module
+  // IDEA: Maybe during development, we could include a Vite dev script that accepts hot modules
+  // to implement live reloading for the CMS as soon as the config changes?
+  // Ideally the CMS itself is only pre-bundled and then doesn't need to change.
 
   if (!bundle.output) {
     console.dir(bundle)

@@ -25,6 +25,8 @@ export default config({
         }),
         content: fields.markdoc({ label: 'Content' }),
         date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
+        // Testing
+        updatedAt: fields.date({ label: 'Updated at 4 :)', defaultValue: { kind: 'today' } }),
       },
     }),
   },

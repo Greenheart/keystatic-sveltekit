@@ -164,6 +164,15 @@ async function buildCMS() {
   if (stderr) console.error(stderr)
 }
 
+// TODO: What happens if keystatic config changes during development?
+// Does that mean the config for the CMS gets out of date?
+// We might need to rebuild the CMS as soon as there are changes in the keystatic config
+// Maybe could be solved with https://github.com/vitejs/vite/discussions/16708
+// We could restart the entire server, but that would be a bit overkill
+// A better solution would be to just trigger a new CMS build
+// And this only applies during development.
+// We could implement a minimal restart based on https://github.com/antfu/vite-plugin-restart/blob/main/src/index.ts
+
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
@@ -177,6 +186,13 @@ export function keystatic(): Plugin {
   /** The production build is saved here */
   let prodDir = ''
   let buildMode: 'prio' | boolean = false
+
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  function schedule(fn: () => void) {
+    clearTimeout(timer)
+    timer = setTimeout(fn, 500)
+  }
 
   return {
     name: 'keystatic-sveltekit',
@@ -206,16 +222,38 @@ export function keystatic(): Plugin {
       ).default
 
       if (keystaticConfig.storage.kind !== 'local') {
-      return {
-        server: {
+        return {
+          server: {
             // When using a Keystatic storage which uses OAuth (like `github`, `cloud`),
             // then both the CMS frontend and the API should be served from `127.0.0.1`
             // By configuring the Vite server host to `127.0.0.1`, we make the server accessible both via `localhost` and `127.0.0.1`.
-          // Related issue: https://github.com/Thinkmill/keystatic/issues/366
-          ...(config.server?.host ? {} : { host: '127.0.0.1' }),
-        },
+            // Related issue: https://github.com/Thinkmill/keystatic/issues/366
+            ...(config.server?.host ? {} : { host: '127.0.0.1' }),
+          },
         }
       }
+    },
+    configureServer(server) {
+      // Restart the server when the Keystatic config changes during development
+      server.watcher.add(['./keystatic.config.ts'])
+      server.watcher.on('change', async () => {
+        await buildCMS()
+        // IDEA: Maybe only send to keystatic paths
+        // See if there are any examples for how it works
+        // NOTE: This works but is super slow. It only updates after the build completed after 4-8 seconds
+        // schedule(() => server.ws.send({ type: 'full-reload', path: '/keystatic/*' }))
+        schedule(() => server.ws.send({ type: 'full-reload' }))
+        // schedule(() => server.restart())
+      })
+      // TODO: Rebuild the files
+      // Maybe it's possible to trigger a reload of specific routes like the Keystatic CMS?
+
+      // IDEA: Maybe we could build the keystatic config separately from the keystatic CMS bundle?
+      // If they are separate, it would be possible to only update the config and get quick hot reloads
+      // We could export a function that initiates the CMS, which is then called within the index.html file
+      // Then the config could be a separate module and loaded on its own. At least during development.
+      // module 1: export the function initCMS() that takes the config as its argument
+      // module 2 in the HTML, import and call initCMS() with the config
     },
   }
 }
