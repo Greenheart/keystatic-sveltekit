@@ -26,8 +26,8 @@ function until(isReady: () => boolean | Promise<boolean>, checkInterval = 400, t
   })
 }
 
-const isKeystaticPath = /^\/keystatic/
-const isKeystaticAPIPath = /^\/api\/keystatic/
+const keystaticRoutePrefix = '/keystatic'
+const keystaticAPIRoutePrefix = '/api/keystatic'
 
 /**
  * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
@@ -90,14 +90,14 @@ export async function handleKeystatic(
   let renderUI: Awaited<ReturnType<typeof initCMS>>
 
   return async ({ event, resolve }) => {
-    if (isKeystaticPath.test(event.url.pathname)) {
+    if (event.url.pathname.startsWith(keystaticRoutePrefix)) {
       if (!renderUI) {
         // Lazy init when the first request comes in
         // This ensures that the CMS has been configured and the CMS build has been started
         renderUI = await initCMS()
       }
       return renderUI(event)
-    } else if (isKeystaticAPIPath.test(event.url.pathname)) {
+    } else if (event.url.pathname.startsWith(keystaticAPIRoutePrefix)) {
       const { body, ...responseInit } = await handleAPI(event.request)
       return new Response(body, responseInit)
     }
@@ -274,4 +274,4 @@ export function keystatic(): Plugin {
  * }
  * ```
  */
-export const isKeystaticRoute = (path: string) => isKeystaticPath.test(path)
+export const isKeystaticRoute = (path: string) => path.startsWith(keystaticRoutePrefix)
