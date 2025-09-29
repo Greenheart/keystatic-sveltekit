@@ -167,8 +167,6 @@ async function buildCMS() {
 export function keystatic(): Plugin {
   /** The project root directory */
   let projectRoot = ''
-  /** Where the cms will be served from */
-  let cmsOutDir = ''
   /** The development build is saved here */
   let devDir = ''
   /** The production build is saved here */
@@ -182,10 +180,6 @@ export function keystatic(): Plugin {
 
       devDir = resolve(projectRoot, '.svelte-kit/keystatic')
       prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
-
-      // We always build to both the development and prod directories
-      // However, in production, it's important to serve from the production directory since that's included in the build
-      cmsOutDir = env.mode !== 'development' ? prodDir : devDir
       buildMode = getBuildMode(env)
 
       return true
