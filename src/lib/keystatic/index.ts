@@ -1,11 +1,11 @@
 import type { Config } from '@keystatic/core'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit'
-import { exec } from 'node:child_process'
 import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import { promisify } from 'node:util'
 import { type ConfigEnv, type Plugin } from 'vite'
+import { Worker } from 'node:worker_threads'
+import { randomUUID, type UUID } from 'node:crypto'
 
 /**
  * Wait until a condition is true.
@@ -148,18 +148,115 @@ function getBuildMode(env: ConfigEnv): BuildMode {
   return true
 }
 
+type TaskResolver<TaskResult> = (result: TaskResult) => void
+
+type ActiveTask<TaskResult> = {
+  worker: Worker
+  resolve: TaskResolver<TaskResult>
+}
+
+class WorkerPool<
+  TaskInput,
+  TaskResult,
+  Task extends { id: UUID; data?: TaskInput } = { id: UUID; data?: TaskInput },
+> {
+  taskQueue: { task: Task; resolve: TaskResolver<TaskResult> }[] = []
+
+  #workerPath: string
+  #workers: Worker[] = []
+  #activeTasks: Map<string, ActiveTask<TaskResult>> = new Map()
+
+  constructor(workerPath: string, poolSize = 1) {
+    this.#workerPath = workerPath
+
+    for (let i = 0; i < poolSize; i++) {
+      this.addWorker()
+    }
+  }
+
+  addWorker() {
+    const worker = new Worker(this.#workerPath)
+    worker.on('message', (msg) => {
+      const { resolve } = this.#activeTasks.get(msg.id)!
+      this.#activeTasks.delete(msg.id)
+      resolve(msg.result)
+      this.checkQueue(worker)
+    })
+    worker.on('error', console.error)
+    worker.on('exit', () => {
+      this.#workers = this.#workers.filter((w) => w !== worker)
+      this.addWorker() // Replace worker if it exits unexpectedly
+    })
+    this.#workers.push(worker)
+  }
+
+  runTask(data?: TaskInput) {
+    return new Promise((resolve) => {
+      this.taskQueue.push({ task: { id: randomUUID(), data } as Task, resolve })
+      this.checkQueue()
+    })
+  }
+
+  checkQueue(workerOverride?: Worker) {
+    if (this.taskQueue.length === 0) return
+
+    const idleWorker =
+      workerOverride ||
+      this.#workers.find(
+        (worker) => ![...this.#activeTasks.values()].some((task) => task.worker === worker),
+      )
+
+    if (!idleWorker) return
+
+    const { task, resolve } = this.taskQueue.shift()!
+    this.#activeTasks.set(task.id, { worker: idleWorker, resolve })
+    idleWorker.postMessage(task)
+  }
+
+  destroy() {
+    this.#workers.forEach((worker) => worker.terminate())
+  }
+}
+
+let pool: WorkerPool<undefined, boolean>
+
 /**
- * Build the CMS frontend in a separate process.
- *
- * This allows the rest of the dev server to start up without noticeable delay.
+ * By using worker threads, we can build the CMS faster compared to if we spawn child processes for every build.
  */
 async function buildCMS() {
-  const { stdout, stderr } = await promisify(exec)(
-    `node ${resolve(import.meta.dirname, 'build.ts')}`,
-  )
-  if (stdout) console.log(stdout)
-  if (stderr) console.error(stderr)
+  pool ??= new WorkerPool(resolve(import.meta.dirname, 'build-worker.ts'))
+
+  // Only keep the most recent build job if multiple changes happened rapidly
+  const old = pool.taskQueue.shift()
+  // Abort without reloading the CMS since no build happened
+  old?.resolve(false)
+
+  return pool.runTask()
 }
+
+// let worker: Worker
+// let task: Promise<void> | null = null
+// let queue: { resolve: (result: any) => void }[] = []
+
+// async function buildCMS_worker() {
+//   if (!worker) {
+//     worker = new Worker('./build-worker.ts')
+//     worker.on('error', console.error)
+//     // worker.on('exit', () => {
+//     //   worker = new Worker('./build-worker.ts')
+//     // })
+//   }
+
+//   return new Promise((resolve) => {
+//     // only allow one task in the queue at a time
+//     queue
+//     // queue.push({ resolve })
+
+//     worker.once('message', (result) => {
+//       resolve(result)
+//     })
+//   })
+// }
 
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
@@ -213,8 +310,11 @@ export function keystatic(): Plugin {
       server.watcher.add(['./keystatic.config.ts'])
       server.watcher.on('change', async (path) => {
         if (path === 'keystatic.config.ts') {
-          await buildCMS()
-          server.ws.send({ type: 'custom', event: 'keystatic:reload' })
+          const wasBuilt = await buildCMS()
+          console.log(wasBuilt)
+          if (wasBuilt) {
+            server.ws.send({ type: 'custom', event: 'keystatic:reload' })
+          }
         }
       })
     },
