@@ -1,5 +1,5 @@
 import { build } from 'esbuild'
-import { cp, mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
 // NOTE: We likely can't assume that the project root is process.cwd() in more complex project setups
@@ -69,13 +69,7 @@ async function buildCMS() {
   // TODO: Make these I/O calls in parallel to speed up the total build time
   await writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8')
 
-  // TODO: Only build the HTML file the first time, since we need
-  const rawHTML = await readFile(resolve(import.meta.dirname, 'cms.html'), 'utf-8')
-  await writeFile(
-    resolve(devDir, 'keystatic.html'),
-    rawHTML.replace('%CMS%', './keystatic.js'),
-    'utf-8',
-  )
+  await cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html'))
 
   await mkdir(prodDir, { recursive: true })
   await cp(devDir, prodDir, { recursive: true })
