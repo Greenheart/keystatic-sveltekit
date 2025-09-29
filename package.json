@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@keystatic/core": "^0.5.48",
-    "@vitejs/plugin-react": "^5.0.3",
+    "esbuild": "^0.25.10",
     "markdoc-svelte": "^3.0.0",
     "zod": "^4.1.11"
   }

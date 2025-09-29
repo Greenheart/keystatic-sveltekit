@@ -155,7 +155,7 @@ function getBuildMode(env: ConfigEnv): BuildMode {
  */
 async function buildCMS() {
   const { stdout, stderr } = await promisify(exec)(
-    `node ${resolve(import.meta.dirname, 'dev-build.ts')}`,
+    `node ${resolve(import.meta.dirname, 'build.ts')}`,
   )
   if (stdout) console.log(stdout)
   if (stderr) console.error(stderr)
