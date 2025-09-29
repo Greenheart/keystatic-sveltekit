@@ -234,30 +234,6 @@ async function buildCMS() {
   return pool.runTask()
 }
 
-// let worker: Worker
-// let task: Promise<void> | null = null
-// let queue: { resolve: (result: any) => void }[] = []
-
-// async function buildCMS_worker() {
-//   if (!worker) {
-//     worker = new Worker('./build-worker.ts')
-//     worker.on('error', console.error)
-//     // worker.on('exit', () => {
-//     //   worker = new Worker('./build-worker.ts')
-//     // })
-//   }
-
-//   return new Promise((resolve) => {
-//     // only allow one task in the queue at a time
-//     queue
-//     // queue.push({ resolve })
-
-//     worker.once('message', (result) => {
-//       resolve(result)
-//     })
-//   })
-// }
-
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
  */
@@ -283,7 +259,6 @@ export function keystatic(): Plugin {
     },
     async config(config) {
       if (buildMode === 'prio') {
-        console.log('[keystatic-sveltekit] Building Keystatic CMS...')
         await buildCMS()
       } else if (buildMode) {
         buildCMS()
@@ -311,7 +286,6 @@ export function keystatic(): Plugin {
       server.watcher.on('change', async (path) => {
         if (path === 'keystatic.config.ts') {
           const wasBuilt = await buildCMS()
-          console.log(wasBuilt)
           if (wasBuilt) {
             server.ws.send({ type: 'custom', event: 'keystatic:reload' })
           }

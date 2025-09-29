@@ -1,8 +1,5 @@
 <script lang="ts">
   let { data } = $props()
-
-  // verify if the SSR re-renders. Useful to debug live-restarts of the keystatic config.
-  console.log('render', new Date().toLocaleTimeString('sv-SE'))
 </script>
 
 <h1>

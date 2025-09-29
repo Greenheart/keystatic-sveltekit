@@ -6,7 +6,7 @@ import { parentPort } from 'node:worker_threads'
 // NOTE: We likely can't assume that the project root is process.cwd() in more complex project setups
 // If this happens, we need a better way to consistently resolve the root package.json
 // If this becomes a real need, then we could let the user specify which root directory to use
-// when creating the keystatic vite plugin.
+// when creating the Keystatic vite plugin.
 // This projectRoot option could then be passed down to the build process.
 const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
@@ -23,7 +23,7 @@ function ensureGDPRCompliantFonts(code: string) {
  * Bundle all CMS code, including the latest config.
  *
  * It's not ideal to bundle React and the full CMS every time during dev,
- * but since the keystatic config includes the React runtime anyhow to support
+ * but since the Keystatic config includes the React runtime anyhow to support
  * custom widgets, the simplest solution is to just bundle everything together.
  */
 async function buildCMS() {
