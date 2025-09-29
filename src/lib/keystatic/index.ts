@@ -184,13 +184,6 @@ export function keystatic(): Plugin {
   let prodDir = ''
   let buildMode: 'prio' | boolean = false
 
-  let timer: ReturnType<typeof setTimeout> | undefined
-
-  function schedule(fn: () => void) {
-    clearTimeout(timer)
-    timer = setTimeout(fn, 500)
-  }
-
   return {
     name: 'keystatic-sveltekit',
     apply(config, env) {
@@ -233,14 +226,11 @@ export function keystatic(): Plugin {
     configureServer(server) {
       // Restart the server when the Keystatic config changes during development
       server.watcher.add(['./keystatic.config.ts'])
-      server.watcher.on('change', async () => {
-        await buildCMS()
-        // IDEA: Maybe only send to keystatic paths
-        // See if there are any examples for how it works
-        // NOTE: This works but is super slow. It only updates after the build completed after 4-8 seconds
-        // schedule(() => server.ws.send({ type: 'full-reload', path: '/keystatic/*' }))
-        schedule(() => server.ws.send({ type: 'full-reload' }))
-        // schedule(() => server.restart())
+      server.watcher.on('change', async (path) => {
+        if (path === 'keystatic.config.ts') {
+          await buildCMS()
+          server.ws.send({ type: 'full-reload', path: '/keystatic/*' })
+        }
       })
       // TODO: Rebuild the files
       // Maybe it's possible to trigger a reload of specific routes like the Keystatic CMS?
