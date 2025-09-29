@@ -1,6 +1,6 @@
 import { build } from 'esbuild'
-import { cp, mkdir, readdir, unlink, writeFile } from 'node:fs/promises'
-import { join, resolve } from 'node:path'
+import { cp, mkdir, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 
 // NOTE: We likely can't assume that the project root is process.cwd() in more complex project setups
 // If this happens, we need a better way to consistently resolve the root package.json
@@ -11,30 +11,14 @@ const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
-async function emptyDir(dir: string) {
-  let items
-  try {
-    items = await readdir(dir)
-  } catch (error) {
-    return mkdir(dir, { recursive: true })
-  }
-
-  return Promise.all(items.map((item) => unlink(join(dir, item))))
-}
-
-// IDEA: this script could accept a CLI argument to only (re)build the config file
-// However, since we bundle everything and esbuild is fast, we might just as well bundle it all together during dev to keep it simple
-
-// IDEA: We could keep track of if the CMS has been build before by using globalThis which is shared with the parent process
-declare global {
-  /** Used to ensure the CMS is only built at most once per `vite` command executed */
-  var HAS_CMS_BUILD_STARTED: boolean | undefined
-}
-
+/**
+ * Bundle all CMS code, including the latest config.
+ *
+ * It's not ideal to bundle React and the full CMS every time during dev,
+ * but since the keystatic config would include the React runtime anyhow,
+ * the simplest solution is to just bundle everything together.
+ */
 async function buildCMS() {
-  // TODO: Only empty the outdir the first time
-  await emptyDir(devDir)
-
   const {
     outputFiles: [rawJS],
   } = await build({
