@@ -14,8 +14,7 @@
         }
       }
     </style>
-    <!-- TODO: remove the vite client during production builds -->
-    <script type="module">
+    <script id="cms-dev" type="module">
       import { createHotContext } from '/@vite/client'
 
       import.meta.hot = createHotContext('/keystatic')

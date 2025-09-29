@@ -1,5 +1,5 @@
 import { build } from 'esbuild'
-import { cp, mkdir, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parentPort } from 'node:worker_threads'
 
@@ -53,6 +53,16 @@ async function buildCMS() {
     ),
     cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html')),
   ])
+
+  // Replace dev script for production builds
+  if (process.env.NODE_ENV !== 'development') {
+    const rawHTML = await readFile(resolve(devDir, 'keystatic.html'), 'utf-8')
+    await writeFile(
+      resolve(devDir, 'keystatic.html'),
+      rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
+      'utf-8',
+    )
+  }
 
   await mkdir(prodDir, { recursive: true })
   await cp(devDir, prodDir, { recursive: true })
