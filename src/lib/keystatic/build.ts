@@ -11,6 +11,13 @@ const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
 
+function ensureGDPRCompliantFonts(code: string) {
+  const fontsURLRegex = /fonts\.googleapis\.com\/css2/g
+  const replacement = 'fonts.bunny.net/css'
+
+  return code.replaceAll(fontsURLRegex, replacement)
+}
+
 /**
  * Bundle all CMS code, including the latest config.
  *
@@ -19,9 +26,7 @@ const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
  * the simplest solution is to just bundle everything together.
  */
 async function buildCMS() {
-  const {
-    outputFiles: [rawJS],
-  } = await build({
+  await build({
     entryPoints: [resolve(import.meta.dirname, 'cms.tsx')],
     bundle: true,
     minify: true,
@@ -41,17 +46,9 @@ async function buildCMS() {
       // Ensure the production bundle for React is used to improve performance.
       'process.env.NODE_ENV': '"production"',
     },
-  })
-
-  function ensureGDPRCompliantFonts(code: string) {
-    const fontsURLRegex = /fonts\.googleapis\.com\/css2/g
-    const replacement = 'fonts.bunny.net/css'
-
-    return code.replaceAll(fontsURLRegex, replacement)
-  }
-
-  // TODO: Make these I/O calls in parallel to speed up the total build time
-  await writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8')
+  }).then(({ outputFiles: [rawJS] }) =>
+    writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8'),
+  )
 
   await cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html'))
 
