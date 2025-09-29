@@ -215,13 +215,12 @@ export function keystatic(): Plugin {
       }
     },
     configureServer(server) {
-      // Restart the server when the Keystatic config changes during development
+      // During dev, reload the Keystatic CMS when the config changes
       server.watcher.add(['./keystatic.config.ts'])
       server.watcher.on('change', async (path) => {
         if (path === 'keystatic.config.ts') {
           await buildCMS()
-          // TODO: Investigate if we can reload only the keystatic routes
-          server.ws.send({ type: 'full-reload', path })
+          server.ws.send({ type: 'custom', event: 'keystatic:reload' })
         }
       })
     },
