@@ -22,35 +22,36 @@ function ensureGDPRCompliantFonts(code: string) {
  * Bundle all CMS code, including the latest config.
  *
  * It's not ideal to bundle React and the full CMS every time during dev,
- * but since the keystatic config would include the React runtime anyhow,
- * the simplest solution is to just bundle everything together.
+ * but since the keystatic config includes the React runtime anyhow to support
+ * custom widgets, the simplest solution is to just bundle everything together.
  */
 async function buildCMS() {
-  await build({
-    entryPoints: [resolve(import.meta.dirname, 'cms.tsx')],
-    bundle: true,
-    minify: true,
-    write: false,
-    plugins: [
-      {
-        name: 'load-keystatic-config',
-        setup(build) {
-          build.onResolve({ filter: /^virtual\:keystatic.config/ }, () => ({
-            path: resolve(projectRoot, 'keystatic.config.ts'),
-          }))
+  await Promise.all([
+    build({
+      entryPoints: [resolve(import.meta.dirname, 'cms.tsx')],
+      bundle: true,
+      minify: true,
+      write: false,
+      plugins: [
+        {
+          name: 'load-keystatic-config',
+          setup(build) {
+            build.onResolve({ filter: /^virtual\:keystatic.config$/ }, () => ({
+              path: resolve(projectRoot, 'keystatic.config.ts'),
+            }))
+          },
         },
+      ],
+      target: ['es2021'],
+      define: {
+        // Ensure the production bundle for React is used to improve performance.
+        'process.env.NODE_ENV': '"production"',
       },
-    ],
-    target: ['es2021'],
-    define: {
-      // Ensure the production bundle for React is used to improve performance.
-      'process.env.NODE_ENV': '"production"',
-    },
-  }).then(({ outputFiles: [rawJS] }) =>
-    writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8'),
-  )
-
-  await cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html'))
+    }).then(({ outputFiles: [rawJS] }) =>
+      writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8'),
+    ),
+    cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html')),
+  ])
 
   await mkdir(prodDir, { recursive: true })
   await cp(devDir, prodDir, { recursive: true })
