@@ -27,6 +27,7 @@ function ensureGDPRCompliantFonts(code: string) {
  * custom widgets, the simplest solution is to just bundle everything together.
  */
 async function buildCMS() {
+  const htmlFilePath = resolve(devDir, 'keystatic.html')
   await Promise.all([
     build({
       entryPoints: [resolve(import.meta.dirname, 'cms.tsx')],
@@ -51,14 +52,14 @@ async function buildCMS() {
     }).then(({ outputFiles: [rawJS] }) =>
       writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8'),
     ),
-    cp(resolve(import.meta.dirname, 'cms.html'), resolve(devDir, 'keystatic.html')),
+    cp(resolve(import.meta.dirname, 'cms.html'), htmlFilePath),
   ])
 
   // Replace dev script for production builds
   if (process.env.NODE_ENV !== 'development') {
-    const rawHTML = await readFile(resolve(devDir, 'keystatic.html'), 'utf-8')
+    const rawHTML = await readFile(htmlFilePath, 'utf-8')
     await writeFile(
-      resolve(devDir, 'keystatic.html'),
+      htmlFilePath,
       rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
       'utf-8',
     )
