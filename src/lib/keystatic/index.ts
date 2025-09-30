@@ -115,16 +115,13 @@ declare global {
 type BuildMode = 'prio' | boolean
 
 /**
- * Only (re)build the CMS when it makes sense.
- * This is a simple way to save resources during development,
- * while building for the actual production build, but not when serving.
+ * Ensure the initial CMS build only happens once.
+ *
+ * Since the `vite` command restarts the server multiple times both during development and
+ * production builds within the same parent process, we use this function to avoid duplicate
+ * builds in the same `vite` process. This also makes the initial build faster.
  */
 function getBuildMode(env: ConfigEnv): BuildMode {
-  // console.log('Determining buildMode', process.uptime(), globalThis.HAS_CMS_BUILD_STARTED)
-
-  // Avoid duplicate builds in the same execution of the `vite` command.
-  // We only need to rebuild the CMS when dependencies have changed,
-  // and a simple solution is to build the CMS the first time the Vite dev server or production build starts.
   if (globalThis.HAS_CMS_BUILD_STARTED) {
     return false
   } else {
@@ -136,11 +133,10 @@ function getBuildMode(env: ConfigEnv): BuildMode {
 
   if (env.mode !== 'development') {
     if (env.command === 'build') {
-      // In production builds, we want to finish the CMS build before other parts of the app
-      // This makes sure the CMS build finishes before other parts of the build.
+      // For production, make sure the CMS build finishes before other parts of the app build.
       return 'prio'
     } else {
-      // Don't build when serving in production - in those cases the CMS should already be built.
+      // Don't build when serving in production (e.g. preview). In these cases the CMS should already be built.
       return false
     }
   }
@@ -153,6 +149,7 @@ let pool: WorkerPool<undefined, boolean>
 
 /**
  * By using worker threads, we can build the CMS faster compared to if we spawn child processes for every build.
+ * This is especially noticeable for dev server restarts when we make multiple builds.
  */
 async function buildCMS(buildMode?: BuildMode) {
   // For production builds, run a single worker and close it once done
@@ -168,7 +165,8 @@ async function buildCMS(buildMode?: BuildMode) {
     })
   }
 
-  // During development, re-use the same worker
+  // IDEA: Maybe import the workerpool only when needed
+  // During development, re-use the same worker in a pool
   pool ??= new WorkerPool(resolve(import.meta.dirname, 'build-worker.ts'))
 
   // Only keep the most recent build job if multiple changes happened rapidly
@@ -185,19 +183,12 @@ async function buildCMS(buildMode?: BuildMode) {
 export function keystatic(): Plugin {
   /** The project root directory */
   let projectRoot = ''
-  /** The development build is saved here */
-  let devDir = ''
-  /** The production build is saved here */
-  let prodDir = ''
   let buildMode: 'prio' | boolean = false
 
   return {
     name: 'keystatic-sveltekit',
     apply(config, env) {
       projectRoot = config.root ?? process.cwd()
-
-      devDir = resolve(projectRoot, '.svelte-kit/keystatic')
-      prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
       buildMode = getBuildMode(env)
 
       return true
