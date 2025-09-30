@@ -66,7 +66,7 @@ export class WorkerPool<
     idleWorker.postMessage(task)
   }
 
-  destroy() {
-    this.#workers.forEach((worker) => worker.terminate())
+  async destroy() {
+    return Promise.all(this.#workers.map((worker) => worker.terminate()))
   }
 }
