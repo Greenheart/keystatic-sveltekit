@@ -1,6 +1,6 @@
 # keystatic-sveltekit
 
-This project shows how to integrate Keystatic CMS with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
+This project shows how to integrate [Keystatic CMS](https://keystatic.com/) with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
 
 ## Some of the key features
 
