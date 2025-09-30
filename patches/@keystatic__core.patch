@@ -1,24 +1,14 @@
 diff --git a/dist/keystatic-core-ui.js b/dist/keystatic-core-ui.js
-index b9e7dd88647f58af0aca3a401cb9850bd90e3003..eea9cc5045420cdb8e993e78d2c657a1c8f9f7b9 100644
+index b9e7dd88647f58af0aca3a401cb9850bd90e3003..495f7955dc2470ce95790c1865d9dfad9597e609 100644
 --- a/dist/keystatic-core-ui.js
 +++ b/dist/keystatic-core-ui.js
-@@ -8446,6 +8446,9 @@ function RedirectToLoopback(props) {
-   }
-   return props.children;
- }
-+function AvoidLocalModeRedirect(props){
-+  return props.children
-+}
- function Keystatic(props) {
-   const $ = c(8);
-   if (props.config.storage.kind === "github") {
-@@ -8478,7 +8481,9 @@ function Keystatic(props) {
+@@ -8478,7 +8478,9 @@ function Keystatic(props) {
    let t2;
    if ($[5] !== props.appSlug || $[6] !== t1) {
      t2 = /*#__PURE__*/jsx(ClientOnly, {
 -      children: /*#__PURE__*/jsx(RedirectToLoopback, {
 +      children: /*#__PURE__*/jsx(props.config.storage.kind === "local"
-+        ? AvoidLocalModeRedirect
++        ? Fragment
 +        : RedirectToLoopback, {
          children: /*#__PURE__*/jsx(AppSlugProvider, {
            value: props.appSlug,
