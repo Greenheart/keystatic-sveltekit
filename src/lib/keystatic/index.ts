@@ -5,6 +5,8 @@ import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { type ConfigEnv, type Plugin } from 'vite'
 import { WorkerPool } from './worker-pool.ts'
+import { randomUUID } from 'node:crypto'
+import { Worker } from 'node:worker_threads'
 
 /**
  * Wait until a condition is true.
@@ -152,7 +154,21 @@ let pool: WorkerPool<undefined, boolean>
 /**
  * By using worker threads, we can build the CMS faster compared to if we spawn child processes for every build.
  */
-async function buildCMS() {
+async function buildCMS(buildMode?: BuildMode) {
+  // For production builds, run a single worker and close it once done
+  if (buildMode === 'prio') {
+    return new Promise((done) => {
+      const worker = new Worker(resolve(import.meta.dirname, 'build-worker.ts'))
+      worker.once('message', (msg: { result: boolean }) => {
+        done(msg.result)
+        worker.terminate()
+      })
+
+      worker.postMessage({ id: randomUUID(), result: false })
+    })
+  }
+
+  // During development, re-use the same worker
   pool ??= new WorkerPool(resolve(import.meta.dirname, 'build-worker.ts'))
 
   // Only keep the most recent build job if multiple changes happened rapidly
@@ -188,7 +204,8 @@ export function keystatic(): Plugin {
     },
     async config(config) {
       if (buildMode === 'prio') {
-        await buildCMS()
+        console.log('[keystatic-sveltekit] Building Keystatic CMS...')
+        await buildCMS(buildMode)
       } else if (buildMode) {
         buildCMS()
       }
