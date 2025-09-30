@@ -43,7 +43,7 @@ export class WorkerPool<
     this.#workers.push(worker)
   }
 
-  runTask(data?: TaskInput) {
+  runTask(data?: TaskInput): Promise<TaskResult> {
     return new Promise((resolve) => {
       this.taskQueue.push({ task: { id: randomUUID(), data } as Task, resolve })
       this.checkQueue()
