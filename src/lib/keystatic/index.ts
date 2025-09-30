@@ -1,12 +1,12 @@
 import type { Config } from '@keystatic/core'
-import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
+import { type ConfigEnv, type Plugin } from 'vite'
 import { error, type Handle, type RequestEvent } from '@sveltejs/kit'
+import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
-import { type ConfigEnv, type Plugin } from 'vite'
-import { WorkerPool } from './worker-pool.ts'
 import { randomUUID } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
+import { type WorkerPool } from './worker-pool.ts'
 
 /**
  * Wait until a condition is true.
@@ -165,9 +165,10 @@ async function buildCMS(buildMode?: BuildMode) {
     })
   }
 
-  // IDEA: Maybe import the workerpool only when needed
   // During development, re-use the same worker in a pool
-  pool ??= new WorkerPool(resolve(import.meta.dirname, 'build-worker.ts'))
+  pool ??= new (await import('./worker-pool.ts')).WorkerPool(
+    resolve(import.meta.dirname, 'build-worker.ts'),
+  )
 
   // Only keep the most recent build job if multiple changes happened rapidly
   const old = pool.taskQueue.shift()
