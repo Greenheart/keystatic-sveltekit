@@ -4,7 +4,7 @@ This project shows how to integrate Keystatic CMS with SvelteKit. You can read t
 
 ## Some of the key features
 
-- This setup makes it simple to run Keystatic with the same server as SvelteKit, to make both deployments and local development easier. Especially smaller projects will benefit from having less moving parts, while larger projects can separate the CMS server from the main app/website server while still benefitting from not having to install and maintain an additional metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
+- This setup makes it simple to run Keystatic with the same server as SvelteKit. This improves both local development and production builds. Especially smaller projects will benefit from having less moving parts, while larger projects can separate the CMS server from the main app/website server while still benefitting from not having to install and maintain an additional metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
 - Uses `markdoc-svelte` to render rich content with support for embedding interactive Svelte components and other features of Markdoc.
 - Supports deeply nested pages, giving more flexibility for how to organise posts and their URLs.
 - Supports hot reloading during development to make it simple and enjoyable to edit `keystatic.config.ts` and quickly see the results in the CMS.
