@@ -108,7 +108,6 @@ export async function handleKeystatic(
 }
 
 declare global {
-  /** Used to ensure the CMS is only built at most once per `vite` command executed */
   var HAS_CMS_BUILD_STARTED: boolean | undefined
 }
 
