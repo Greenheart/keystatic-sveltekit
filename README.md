@@ -1,11 +1,17 @@
-# keystatic-svelte
+# keystatic-sveltekit
 
-- Allow running Keystatic with the same server as SvelteKit, to make both deployments and local development easier.
+This project shows how to integrate Keystatic CMS with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
+
+## Some of the key features
+
+- This setup makes it simple to run Keystatic with the same server as SvelteKit, to make both deployments and local development easier. Especially smaller projects will benefit from having less moving parts, while larger projects can separate the CMS server from the main app/website server while still benefitting from not having to install and maintain an additional metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
 - Uses `markdoc-svelte` to render rich content with support for embedding interactive Svelte components and other features of Markdoc.
-- In order to separate app styles from Keystatic, we use SvelteKit [layout groups](<https://svelte.dev/docs/kit/advanced-routing#Advanced-layouts-(group)>).
-  - Once SvelteKit supports [dynamically adding routes](https://github.com/sveltejs/kit/issues/8896), we could remove the need for using layout groups and render Keystatic via the SvelteKit [handle](https://svelte.dev/docs/kit/hooks#Server-hooks-handle) hook. This would make it very simple to embed Keystatic within a SvelteKit project since there would no longer be a need to define custom Keystatic routes since that would be handled by the `handleKeystatic()` hook.
+- Supports deeply nested pages, giving more flexibility for how to organise posts and their URLs.
+- Supports hot reloading during development to make it simple and enjoyable to edit `keystatic.config.ts` and quickly see the results in the CMS.
 
-- It's possible to only enable Keystatic in specific environments, like `development`:
+## How to only enable Keystatic CMS during `development`:
+
+If you use the Keystatic `local` storage mode, here's how you enable the CMS only during `development`:
 
 ```ts
 // src/hooks.server.ts
@@ -26,41 +32,6 @@ if (dev) {
 export const handle = sequence(hooks)
 ```
 
----
+## License
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
-
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+MIT
