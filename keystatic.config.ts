@@ -1,7 +1,13 @@
 import { config, fields, collection } from '@keystatic/core'
+import { block, type ContentComponent } from '@keystatic/core/content-components'
 
-// TODO: Customise the Markdoc config to allow custom tags (for example to handle images )
-export const markdocConfig = fields.markdoc.createMarkdocConfig({})
+const components: Record<string, ContentComponent> = {
+  Counter: block({
+    label: 'Counter',
+    description: 'Interactive Svelte component',
+    schema: {},
+  }),
+}
 
 export default config({
   storage: {
@@ -23,10 +29,8 @@ export default config({
               'Tip: You can save to a specific directory like for example "2025/new-post"',
           },
         }),
-        content: fields.markdoc({ label: 'Content' }),
+        content: fields.markdoc({ label: 'Content', components }),
         date: fields.date({ label: 'Date', defaultValue: { kind: 'today' } }),
-        // Testing
-        updatedAt: fields.date({ label: 'Updated at 4 :)', defaultValue: { kind: 'today' } }),
       },
     }),
   },

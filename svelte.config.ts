@@ -6,8 +6,8 @@ import { glob } from 'node:fs/promises'
 import { isKeystaticRoute } from './src/lib/keystatic/index.ts'
 
 export async function getPrerenderEntries() {
-  const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap((file) =>
-    file.split('/content')?.[1].replace(/\.md(?:oc)/, ''),
+  const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap(
+    (file: string) => file.split('/content')[1].replace(/\.md(?:oc)/, ''),
   )
 
   // Add loaders for more prerenderable content types here
@@ -16,7 +16,18 @@ export async function getPrerenderEntries() {
 
 const config = {
   extensions: ['.svelte', '.mdoc', '.md'],
-  preprocess: [vitePreprocess(), markdocPreprocess()],
+  preprocess: [
+    vitePreprocess(),
+    markdocPreprocess({
+      components: '$lib/components/markdoc',
+      tags: {
+        Counter: {
+          render: 'Counter',
+          selfClosing: true,
+        },
+      },
+    }),
+  ],
   kit: {
     adapter: adapter(),
     prerender: {
