@@ -18,7 +18,7 @@ If you use the Keystatic `local` storage mode, here's how you enable the CMS onl
 
 ```ts
 // src/hooks.server.ts
-import { type Handle, sequence } from '@sveltejs/kit'
+import { type Handle } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
 import { dev } from '$app/environment'
 
