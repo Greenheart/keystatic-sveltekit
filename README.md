@@ -16,6 +16,22 @@ This project shows how to integrate [Keystatic CMS](https://keystatic.com/) with
 
 If you use the Keystatic `local` storage mode, here's how you enable the CMS only during `development`:
 
+1. Only import and enable the Vite plugin during `dev`:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { sveltekit } from '@sveltejs/kit/vite'
+
+const dev = process.env.NODE_ENV === 'development'
+
+export default defineConfig({
+  plugins: [dev && (await import('./src/lib/keystatic')).keystatic(), sveltekit()],
+})
+```
+
+2. Only import and enable the SvelteKit hook during `dev`:
+
 ```ts
 // src/hooks.server.ts
 import { type Handle } from '@sveltejs/kit'
@@ -27,12 +43,13 @@ const hooks: Handle[] = []
 
 // Only enable Keystatic during development
 if (dev) {
-  // Use a dynamic import to reduce the size of the production build.
-  const { handleKeystatic } = await import('$lib/keystatic')
-  hooks.push(await handleKeystatic())
+  // Use dynamic imports to reduce the size of the production build.
+  const config = (await import('../keystatic.config')).default
+  const { handleKeystatic } = await import('./lib/keystatic')
+  hooks.push(await handleKeystatic({ config }))
 }
 
-export const handle = sequence(hooks)
+export const handle = sequence(...hooks)
 ```
 
 ## License
