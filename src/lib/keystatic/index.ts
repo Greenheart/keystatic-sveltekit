@@ -82,7 +82,7 @@ export async function handleKeystatic(
         )
       }
 
-      return new Response(await readFile(htmlFile), {
+      return new Response(await readFile(htmlFile, 'utf-8'), {
         headers: { 'Content-Type': 'text/html' },
       })
     }
@@ -100,6 +100,7 @@ export async function handleKeystatic(
       return renderUI(event)
     } else if (event.url.pathname.startsWith(keystaticAPIRoutePrefix)) {
       const { body, ...responseInit } = await handleAPI(event.request)
+      // @ts-expect-error NOTE: Unsure how to fix this type
       return new Response(body, responseInit)
     }
 
