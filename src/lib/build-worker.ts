@@ -8,6 +8,7 @@ import { parentPort } from 'node:worker_threads'
 // If this becomes a real need, then we could let the user specify which root directory to use
 // when creating the Keystatic vite plugin.
 // This projectRoot option could then be passed down to the build process.
+// Similarly, we could also allow passing in a custom path to the file `keystatic.config.ts`
 const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
