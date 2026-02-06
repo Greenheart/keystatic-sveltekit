@@ -2,6 +2,7 @@
 /** @import { ConfigEnv, Plugin } from 'vite' */
 /** @import { Handle, RequestEvent } from '@sveltejs/kit' */
 /** @import { WorkerPool } from './worker-pool.js' */
+
 import { error } from '@sveltejs/kit'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { cp, readdir, readFile, mkdir } from 'node:fs/promises'

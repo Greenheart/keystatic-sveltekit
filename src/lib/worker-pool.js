@@ -10,6 +10,7 @@ import { Worker } from 'node:worker_threads'
 export class WorkerPool {
   /** @type {{ task: Task; resolve: TaskResolver<TaskResult> }[]} */
   taskQueue = []
+
   #workerPath
   /** @type {Worker[]} */
   #workers = []
@@ -18,7 +19,7 @@ export class WorkerPool {
 
   /**
    * @param {string} workerPath
-   * @param {number} [poolSize=1]
+   * @param {number} [poolSize]
    */
   constructor(workerPath, poolSize = 1) {
     this.#workerPath = workerPath
@@ -27,9 +28,6 @@ export class WorkerPool {
     }
   }
 
-  /**
-   * @returns {void}
-   */
   addWorker() {
     const worker = new Worker(this.#workerPath)
     worker.on('message', (msg) => {
@@ -61,7 +59,6 @@ export class WorkerPool {
 
   /**
    * @param {Worker} [workerOverride]
-   * @returns {void}
    */
   checkQueue(workerOverride) {
     if (this.taskQueue.length === 0) return
@@ -78,9 +75,6 @@ export class WorkerPool {
     idleWorker.postMessage(task)
   }
 
-  /**
-   * @returns {Promise<number[]>}
-   */
   async destroy() {
     return Promise.all(this.#workers.map((worker) => worker.terminate()))
   }
