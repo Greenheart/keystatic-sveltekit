@@ -2,15 +2,30 @@
 
 This project shows how to integrate [Keystatic CMS](https://keystatic.com/) with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
 
-## Some of the key features
+```sh
+pnpm i keystatic-sveltekit
+```
+
+## Key features
 
 - This setup makes it simple to run Keystatic with the same server as SvelteKit. This improves both local development and production builds. Especially smaller projects will benefit from having less moving parts, while larger projects can separate the CMS server from the main app/website server while still benefitting from not having to install and maintain an additional metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
-
-- Uses `markdoc-svelte` to render rich content with support for embedding interactive Svelte components and other features of Markdoc.
 
 - Supports deeply nested pages, giving more flexibility for how to organise posts and their URLs.
 
 - Supports hot reloading during development to make it simple and enjoyable to edit `keystatic.config.ts` and quickly see the results in the CMS.
+
+## Demo project and Markdoc integration
+
+The Git repository for `keystatic-sveltekit` also includes a demo project showcasing how to use [markdoc-svelte](https://github.com/CollierCZ/markdoc-svelte) to render rich [Markdoc](https://markdoc.dev/) content with support for embedding interactive Svelte components and other useful features.
+
+You can explore the demo by cloning the Git repo and running the following commands:
+
+```sh
+pnpm i
+pnpm dev
+```
+
+Visit <http://localhost:5173> for the demo page, and <http://localhost:5173/keystatic> for the CMS.
 
 ## How to only enable Keystatic CMS during `development`:
 
@@ -26,7 +41,7 @@ import { sveltekit } from '@sveltejs/kit/vite'
 const dev = process.env.NODE_ENV === 'development'
 
 export default defineConfig({
-  plugins: [dev && (await import('./src/lib/index.ts')).keystatic(), sveltekit()],
+  plugins: [dev && (await import('keystatic-sveltekit')).keystatic(), sveltekit()],
 })
 ```
 
@@ -45,7 +60,7 @@ const hooks: Handle[] = []
 if (dev) {
   // Use dynamic imports to reduce the size of the production build.
   const config = (await import('../keystatic.config.ts')).default
-  const { handleKeystatic } = await import('./lib/index.ts')
+  const { handleKeystatic } = await import('keystatic-sveltekit')
   hooks.push(await handleKeystatic({ config }))
 }
 
