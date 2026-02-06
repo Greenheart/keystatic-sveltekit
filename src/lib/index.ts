@@ -108,10 +108,6 @@ export async function handleKeystatic(
   }
 }
 
-declare global {
-  var HAS_CMS_BUILD_STARTED: boolean | undefined
-}
-
 type BuildMode = 'prio' | boolean
 
 /**
@@ -122,12 +118,14 @@ type BuildMode = 'prio' | boolean
  * builds in the same `vite` process. This also makes the initial build faster.
  */
 function getBuildMode(env: ConfigEnv): BuildMode {
+  // @ts-expect-error expected global variable that will be defined later
   if (globalThis.HAS_CMS_BUILD_STARTED) {
     return false
   } else {
     // We can use `globalThis` to reliably determine if there has been a previous build.
     // This is possible since `globalThis` is shared in the Vite parent process that restarts the build,
     // and because both the Vite config loading and the SvelteKit dev/build process are run by the same parent process,
+    // @ts-expect-error expected global variable defined here
     globalThis.HAS_CMS_BUILD_STARTED = true
   }
 
