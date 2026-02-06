@@ -74,6 +74,12 @@ import config from '../keystatic.config.ts'
 export const handle: Handle = await handleKeystatic({ config })
 ```
 
+You can now access Keystatic CMS at <http://localhost:5173/keystatic>.
+
+### Read content and use it in your SvelteKit project
+
+The [Keystatic Reader API](https://keystatic.com/docs/reader-api) is a good way to read your content and use it on the server side of SvelteKit.
+
 ---
 
 ## Demo project and Markdoc integration
