@@ -26,7 +26,7 @@ import { sveltekit } from '@sveltejs/kit/vite'
 const dev = process.env.NODE_ENV === 'development'
 
 export default defineConfig({
-  plugins: [dev && (await import('./src/lib/keystatic')).keystatic(), sveltekit()],
+  plugins: [dev && (await import('./src/lib/index.ts')).keystatic(), sveltekit()],
 })
 ```
 
@@ -44,8 +44,8 @@ const hooks: Handle[] = []
 // Only enable Keystatic during development
 if (dev) {
   // Use dynamic imports to reduce the size of the production build.
-  const config = (await import('../keystatic.config')).default
-  const { handleKeystatic } = await import('./lib/keystatic')
+  const config = (await import('../keystatic.config.ts')).default
+  const { handleKeystatic } = await import('./lib/index.ts')
   hooks.push(await handleKeystatic({ config }))
 }
 

@@ -19,7 +19,7 @@ export default config({
       slugField: 'title',
       // This path allows you to store posts in any subdirectories, like for example "/posts/{year}/some-post"
       // Learn more: https://keystatic.com/docs/path-wildcard#nested-slug-example
-      path: 'src/content/posts/**',
+      path: './src/content/posts/**',
       format: { contentField: 'content' },
       schema: {
         title: fields.slug({

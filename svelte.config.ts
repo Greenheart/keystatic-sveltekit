@@ -3,7 +3,7 @@ import adapter from '@sveltejs/adapter-auto'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { markdocPreprocess } from 'markdoc-svelte'
 import { glob } from 'node:fs/promises'
-import { isKeystaticRoute } from './src/lib/keystatic/index.ts'
+import { isKeystaticRoute } from './src/lib/index.ts'
 
 export async function getPrerenderEntries() {
   const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap(
@@ -19,7 +19,7 @@ const config = {
   preprocess: [
     vitePreprocess(),
     markdocPreprocess({
-      components: '$lib/components/markdoc',
+      components: '$components/markdoc',
       tags: {
         Counter: {
           render: 'Counter',
@@ -39,6 +39,9 @@ const config = {
         // Fail the build in other cases.
         throw new Error(message)
       },
+    },
+    alias: {
+      '$components/*': './src/components/*',
     },
   },
 } satisfies Config
