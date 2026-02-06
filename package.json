@@ -9,6 +9,10 @@
     "name": "Samuel Plumppu",
     "url": "https://samuelplumppu.se"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Greenheart/keystatic-sveltekit"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build && pnpm prepack",
