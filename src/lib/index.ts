@@ -6,7 +6,7 @@ import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
-import { type WorkerPool } from './worker-pool.ts'
+import { type WorkerPool } from './worker-pool.js'
 
 /**
  * Wait until a condition is true.
