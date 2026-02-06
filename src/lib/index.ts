@@ -150,7 +150,7 @@ let pool: WorkerPool<undefined, boolean>
  * This is especially noticeable for dev server restarts when we make multiple builds.
  */
 async function buildCMS(buildMode?: BuildMode) {
-  const workerModulePath = resolve(import.meta.dirname, 'build-worker.ts')
+  const workerModulePath = resolve(import.meta.dirname, 'build-worker.js')
   // For production builds, run a single worker and close it once done
   if (buildMode === 'prio') {
     return new Promise((done) => {
@@ -165,7 +165,7 @@ async function buildCMS(buildMode?: BuildMode) {
   }
 
   // During development, re-use the same worker in a pool
-  pool ??= new (await import('./worker-pool.ts')).WorkerPool(workerModulePath)
+  pool ??= new (await import('./worker-pool.js')).WorkerPool(workerModulePath)
 
   // Only keep the most recent build job if multiple changes happened rapidly
   const old = pool.taskQueue.shift()
