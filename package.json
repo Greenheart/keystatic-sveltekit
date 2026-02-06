@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Greenheart/keystatic-sveltekit"
+    "url": "git+https://github.com/Greenheart/keystatic-sveltekit.git"
   },
   "scripts": {
     "dev": "vite dev",
