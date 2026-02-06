@@ -15,6 +15,7 @@ export class WorkerPool {
   #workers = []
   /** @type {Map<string, ActiveTask<TaskResult>>} */
   #activeTasks = new Map()
+
   /**
    * @param {string} workerPath
    * @param {number} [poolSize=1]
@@ -25,6 +26,7 @@ export class WorkerPool {
       this.addWorker()
     }
   }
+
   /**
    * @returns {void}
    */
@@ -44,6 +46,7 @@ export class WorkerPool {
     })
     this.#workers.push(worker)
   }
+
   /**
    * @param {TaskInput} [data]
    * @returns {Promise<TaskResult>}
@@ -55,6 +58,7 @@ export class WorkerPool {
       this.checkQueue()
     })
   }
+
   /**
    * @param {Worker} [workerOverride]
    * @returns {void}
@@ -73,6 +77,7 @@ export class WorkerPool {
     this.#activeTasks.set(task.id, { worker: idleWorker, resolve })
     idleWorker.postMessage(task)
   }
+
   /**
    * @returns {Promise<number[]>}
    */

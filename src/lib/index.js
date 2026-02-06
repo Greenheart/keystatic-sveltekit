@@ -1,17 +1,19 @@
 /** @import { Config } from '@keystatic/core' */
 /** @import { ConfigEnv, Plugin } from 'vite' */
 /** @import { Handle, RequestEvent } from '@sveltejs/kit' */
+/** @import { WorkerPool } from './worker-pool.js' */
 import { error } from '@sveltejs/kit'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
+
 /**
  * Wait until a condition is true.
  * @param {() => boolean | Promise<boolean>} isReady
- * @param {number} [checkInterval=400]
- * @param {number} [timeout=15_000]
+ * @param {number} checkInterval
+ * @param {number} timeout
  * @returns {Promise<void>}
  */
 function until(isReady, checkInterval = 400, timeout = 15_000) {
@@ -29,11 +31,13 @@ function until(isReady, checkInterval = 400, timeout = 15_000) {
     }, checkInterval)
   })
 }
+
 const keystaticRoutePrefix = '/keystatic'
 const keystaticAPIRoutePrefix = '/api/keystatic'
+
 /**
  * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
- * @param {...Parameters<typeof makeGenericAPIRouteHandler>} [args]
+ * @param {Parameters<typeof makeGenericAPIRouteHandler>} args
  * @returns {Promise<Handle>}
  */
 export async function handleKeystatic(...args) {
@@ -44,6 +48,7 @@ export async function handleKeystatic(...args) {
   const cmsOutDir = process.env.NODE_ENV !== 'development' ? prodDir : devDir
   const cmsHTMLFileName = 'keystatic.html'
   const htmlFile = resolve(cmsOutDir, cmsHTMLFileName)
+
   async function initCMS() {
     // Wait until we have some build result to show.
     // This is especially important for the first dev and production builds.
@@ -60,7 +65,8 @@ export async function handleKeystatic(...args) {
       }
       return hasCMSFiles
     })
-    return async (event) => {
+
+    return async (/** @type RequestEvent */ event) => {
       const { building } = await import('$app/environment')
       if (building) {
         // Throwing an HTTP error to trigger the `handleHttpError()` in `svelte.config.ts`
@@ -80,7 +86,10 @@ export async function handleKeystatic(...args) {
       })
     }
   }
+
+  /** @type {Awaited<ReturnType<typeof initCMS>>} */
   let renderUI
+
   return async ({ event, resolve }) => {
     if (event.url.pathname.startsWith(keystaticRoutePrefix)) {
       if (!renderUI) {
@@ -97,6 +106,7 @@ export async function handleKeystatic(...args) {
     return resolve(event)
   }
 }
+
 /**
  * Ensure the initial CMS build only happens once.
  *
@@ -107,12 +117,14 @@ export async function handleKeystatic(...args) {
  * @returns {BuildMode}
  */
 function getBuildMode(env) {
+  // @ts-expect-error expected global variable that will be defined later
   if (globalThis.HAS_CMS_BUILD_STARTED) {
     return false
   } else {
     // We can use `globalThis` to reliably determine if there has been a previous build.
     // This is possible since `globalThis` is shared in the Vite parent process that restarts the build,
     // and because both the Vite config loading and the SvelteKit dev/build process are run by the same parent process,
+    // @ts-expect-error expected global variable defined here
     globalThis.HAS_CMS_BUILD_STARTED = true
   }
   if (env.mode !== 'development') {
@@ -127,12 +139,14 @@ function getBuildMode(env) {
   // Build the first time during development
   return true
 }
+
+/** @type {WorkerPool<undefined, boolean>} */
 let pool
+
 /**
  * By using worker threads, we can build the CMS faster compared to if we spawn child processes for every build.
  * This is especially noticeable for dev server restarts when we make multiple builds.
  * @param {BuildMode} [buildMode]
- * @returns {Promise<unknown>}
  */
 async function buildCMS(buildMode) {
   const workerModulePath = resolve(import.meta.dirname, 'build-worker.js')
@@ -140,7 +154,7 @@ async function buildCMS(buildMode) {
   if (buildMode === 'prio') {
     return new Promise((done) => {
       const worker = new Worker(workerModulePath)
-      worker.once('message', (msg) => {
+      worker.once('message', (/** @type {{result: boolean}} */ msg) => {
         done(msg.result)
         worker.terminate()
       })
@@ -155,6 +169,7 @@ async function buildCMS(buildMode) {
   old?.resolve(false)
   return pool.runTask()
 }
+
 /**
  * Vite plugin to integrate Keystatic with SvelteKit projects
  * @returns {Plugin}
@@ -162,7 +177,9 @@ async function buildCMS(buildMode) {
 export function keystatic() {
   /** The project root directory */
   let projectRoot = ''
+  /** @type {boolean | 'prio'} */
   let buildMode = false
+
   return {
     name: 'keystatic-sveltekit',
     apply(config, env) {
@@ -177,9 +194,12 @@ export function keystatic() {
       } else if (buildMode) {
         buildCMS()
       }
+
+      /** @type {Config} */
       const keystaticConfig = (
         await import(/* @vite-ignore */ resolve(projectRoot, 'keystatic.config.ts'))
       ).default
+
       if (keystaticConfig.storage.kind !== 'local') {
         return {
           server: {
