@@ -1,5 +1,5 @@
 {
-  "name": "keystatic-svelte",
+  "name": "keystatic-sveltekit",
   "description": "Keystatic CMS integration for SvelteKit",
   "private": true,
   "version": "1.0.0",
