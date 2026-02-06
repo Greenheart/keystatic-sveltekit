@@ -9,6 +9,9 @@ node_modules
 /build
 /dist
 
+# Built package
+keystatic-sveltekit-*.tgz
+
 # OS
 .DS_Store
 Thumbs.db
