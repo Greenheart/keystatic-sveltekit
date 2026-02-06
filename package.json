@@ -23,6 +23,7 @@
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.0",
     "@sveltejs/kit": "^2.50.2",
+    "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
