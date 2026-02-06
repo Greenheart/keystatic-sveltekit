@@ -3,7 +3,7 @@
 This project shows how to integrate [Keystatic CMS](https://keystatic.com/) with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
 
 ```sh
-pnpm i keystatic-sveltekit
+pnpm add keystatic-sveltekit
 ```
 
 ## Key features
@@ -13,6 +13,68 @@ pnpm i keystatic-sveltekit
 - Supports deeply nested pages, giving more flexibility for how to organise posts and their URLs.
 
 - Supports hot reloading during development to make it simple and enjoyable to edit `keystatic.config.ts` and quickly see the results in the CMS.
+
+## Get started
+
+You need a SvelteKit project before adding `keystatic-sveltekit`.
+
+```sh
+npx sv create my-app
+# Alternatively, if you already have a project:
+cd my-app
+```
+
+Install the required dependencies:
+
+```sh
+pnpm add keystatic-sveltekit @keystatic/core react react-dom
+```
+
+Alternatively, if you plan to [only use Keystatic CMS locally during development](#how-to-only-enable-keystatic-cms-during-development):
+
+```sh
+pnpm add -D keystatic-sveltekit @keystatic/core react react-dom
+```
+
+### Adding Keystatic CMS in your SvelteKit project
+
+Add `keystatic.config.ts` to your project root directory:
+
+```ts
+// keystatic.config.ts
+import { config } from '@keystatic/core'
+
+export default config({
+  // See https://keystatic.com/docs/configuration
+})
+```
+
+Add the Vite plugin:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite'
+import { sveltekit } from '@sveltejs/kit/vite'
+import { keystatic } from 'keystatic-sveltekit'
+
+export default defineConfig({
+  // Register the keystatic plugin before SvelteKit
+  plugins: [keystatic(), sveltekit()],
+})
+```
+
+Register the Keystatic routes in a [SvelteKit server hook](https://svelte.dev/docs/kit/hooks#Server-hooks). This will serve both the CMS frontend and API routes.
+
+```ts
+// src/hooks.server.ts
+import { type Handle } from '@sveltejs/kit'
+import { handleKeystatic } from 'keystatic-sveltekit'
+import config from '../keystatic.config.ts'
+
+export const handle: Handle = await handleKeystatic({ config })
+```
+
+---
 
 ## Demo project and Markdoc integration
 
