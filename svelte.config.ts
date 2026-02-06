@@ -3,7 +3,7 @@ import adapter from '@sveltejs/adapter-auto'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { markdocPreprocess } from 'markdoc-svelte'
 import { glob } from 'node:fs/promises'
-import { isKeystaticRoute } from './src/lib/index.ts'
+import { isKeystaticRoute } from './src/lib/index.js'
 
 export async function getPrerenderEntries() {
   const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap(

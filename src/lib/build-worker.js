@@ -2,7 +2,6 @@ import { build } from 'esbuild'
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parentPort } from 'node:worker_threads'
-
 // NOTE: We likely can't assume that the project root is process.cwd() in more complex project setups
 // If this happens, we need a better way to consistently resolve the root package.json
 // If this becomes a real need, then we could let the user specify which root directory to use
@@ -12,26 +11,28 @@ import { parentPort } from 'node:worker_threads'
 const projectRoot = process.cwd()
 const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
 const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
-
-function ensureGDPRCompliantFonts(code: string) {
+/**
+ * @param {string} code
+ * @returns {string}
+ */
+function ensureGDPRCompliantFonts(code) {
   const fontsURLRegex = /fonts\.googleapis\.com\/css2/g
   const replacement = 'fonts.bunny.net/css'
-
   return code.replaceAll(fontsURLRegex, replacement)
 }
-
 /**
  * Bundle all CMS code, including the latest config.
  *
  * It's not ideal to bundle React and the full CMS every time during dev,
  * but since the Keystatic config includes the React runtime anyhow to support
  * custom widgets, the simplest solution is to just bundle everything together.
+ * @returns {Promise<void>}
  */
 async function buildCMS() {
   const htmlFilePath = resolve(devDir, 'keystatic.html')
   await Promise.all([
     build({
-      entryPoints: [resolve(import.meta.dirname, 'cms.tsx')],
+      entryPoints: [resolve(import.meta.dirname, 'cms.jsx')],
       bundle: true,
       minify: true,
       write: false,
@@ -55,7 +56,6 @@ async function buildCMS() {
     ),
     cp(resolve(import.meta.dirname, 'cms.html'), htmlFilePath),
   ])
-
   // Replace dev script for production builds
   if (process.env.NODE_ENV !== 'development') {
     const rawHTML = await readFile(htmlFilePath, 'utf-8')
@@ -65,13 +65,10 @@ async function buildCMS() {
       'utf-8',
     )
   }
-
   await mkdir(prodDir, { recursive: true })
   await cp(devDir, prodDir, { recursive: true })
 }
-
 if (!parentPort) throw new Error('Missing parentPort')
-
 parentPort.on('message', async (task) => {
   await buildCMS()
   parentPort?.postMessage({ id: task.id, result: true })
