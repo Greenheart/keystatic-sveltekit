@@ -74,7 +74,18 @@ import config from '../keystatic.config.ts'
 export const handle: Handle = await handleKeystatic({ config })
 ```
 
-You can now access Keystatic CMS at <http://localhost:5173/keystatic>.
+---
+
+**Temporary step:** Finally, there is one quirk with Keystatic that we need to address before [this PR](https://github.com/Thinkmill/keystatic/pull/1465) gets merged. Keystatic always redirects to 127.0.0.1 (the loopback address) when visiting the `/keystatic` admin UI. This is technically necessary when using the [GitHub mode](https://keystatic.com/docs/github-mode)) to properly support OAuth redirects. However, when using [local mode](https://keystatic.com/docs/local-mode), this redirect is not necessary and quite disruptive when everything else is hosted on `localhost`.
+
+There are two workarounds:
+
+1. Change `vite.config.ts` to set `server.host` to `127.0.0.1` to host SvelteKit on both `localhost` and `127.0.0.1`. This is the easy solution, but might cause weird behaviours with redirects from `localhost` to `127.0.0.1` when opening Keystatic.
+2. Use `pnpm patch` ([instructions](https://pnpm.io/cli/patch)) to add [this patch](./patches/@keystatic__core.patch) and implement the same workaround as in the upstream [PR](https://github.com/Thinkmill/keystatic/pull/1465).
+
+---
+
+Once all steps are completed, you can run `pnpm dev` and access Keystatic CMS at <http://localhost:5173/keystatic>.
 
 ### Read content and use it in your SvelteKit project
 
