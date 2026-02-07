@@ -71,19 +71,10 @@ import { type Handle } from '@sveltejs/kit'
 import { handleKeystatic } from 'keystatic-sveltekit'
 import config from '../keystatic.config.ts'
 
-export const handle: Handle = await handleKeystatic(
-  { config },
-  { slugEnvName: 'PUBLIC_KEYSTATIC_GITHUB_APP_SLUG' },
-)
-```
-
-If you use the [GitHub mode](https://keystatic.com/docs/github-mode), make sure your env variable `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` (which is the standard name) matches the actual env variable used in your project. The Keystatic CMS UI will guide you through setting up your GitHub app and related env variables, so you can fix this later in the setup process.
-
-However, if you only use [local mode](https://keystatic.com/docs/local-mode), you can remove the second argument and define your handle hook like this instead:
-
-```ts
 export const handle: Handle = await handleKeystatic({ config })
 ```
+
+You can also pass in additional configuration like environment variables, which is useful if you have nonstandard names for your variables Refer to the parameters of `handleKeystatic()` for more info.
 
 ---
 
