@@ -135,6 +135,8 @@ if (dev) {
 export const handle = sequence(...hooks)
 ```
 
+3. You can also consider moving some dependencies like `keystatic-sveltekit` and `@keystatic/core` to `devDependencies` so they won't be installed for production environments.
+
 ## License
 
 MIT
