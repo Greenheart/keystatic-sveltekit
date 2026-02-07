@@ -227,6 +227,7 @@ export function keystatic() {
     },
   }
 }
+
 /**
  * Returns a boolean indicating whether the given URL path is a Keystatic CMS route.
  *
@@ -245,8 +246,9 @@ export function keystatic() {
  *   throw new Error(message)
  * }
  * ```
+ *
  * @param {string} path
- * @returns {boolean}
  */
-export const isKeystaticRoute = (path) => path.startsWith(keystaticRoutePrefix)
-/** @typedef {'prio' | boolean} BuildMode */
+export function isKeystaticRoute(path) {
+  return path.startsWith(keystaticRoutePrefix)
+}
