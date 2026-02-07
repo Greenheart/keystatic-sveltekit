@@ -76,6 +76,9 @@ export const handle: Handle = await handleKeystatic({ config })
 
 ---
 
+> [!NOTE]
+> This section should be removed once the upstream Keystatic fixes [issue 366](github.com/Thinkmill/keystatic/issues/366)
+
 **Temporary step:** Finally, there is one quirk with Keystatic that we need to address before [this PR](https://github.com/Thinkmill/keystatic/pull/1465) gets merged. Keystatic always redirects to 127.0.0.1 (the loopback address) when visiting the `/keystatic` admin UI. This is technically necessary when using the [GitHub mode](https://keystatic.com/docs/github-mode)) to properly support OAuth redirects. However, when using [local mode](https://keystatic.com/docs/local-mode), this redirect is not necessary and quite disruptive when everything else is hosted on `localhost`.
 
 There are two workarounds:
