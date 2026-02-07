@@ -38,12 +38,48 @@ const keystaticRoutePrefix = '/keystatic'
 const keystaticAPIRoutePrefix = '/api/keystatic'
 
 /**
+ * @template T
+ * @param {() => T} fn
+ * @returns {T | undefined}
+ */
+function tryOrUndefined(fn) {
+  try {
+    return fn()
+  } catch {
+    return undefined
+  }
+}
+
+/**
  * Create a SvelteKit handle hook to serve the Keystatic CMS and API.
- * @param {Parameters<typeof makeGenericAPIRouteHandler>} args
+ * @param {Parameters<typeof makeGenericAPIRouteHandler>[0]} apiConfig
  * @returns {Promise<Handle>}
  */
-export async function handleKeystatic(...args) {
-  const handleAPI = makeGenericAPIRouteHandler(...args)
+export async function handleKeystatic(apiConfig) {
+  // Only call SvelteKit env variable loading at runtime
+  // to ensure the library can be built with Vite
+  const { env } = await import('$env/dynamic/private')
+  const handleAPI = makeGenericAPIRouteHandler(
+    {
+      ...apiConfig,
+      clientId:
+        apiConfig.clientId ??
+        tryOrUndefined(() => {
+          return env.KEYSTATIC_GITHUB_CLIENT_ID
+        }),
+      clientSecret:
+        apiConfig.clientSecret ??
+        tryOrUndefined(() => {
+          return env.KEYSTATIC_GITHUB_CLIENT_SECRET
+        }),
+      secret:
+        apiConfig.secret ??
+        tryOrUndefined(() => {
+          return env.KEYSTATIC_SECRET
+        }),
+    },
+    { slugEnvName: 'PUBLIC_KEYSTATIC_GITHUB_APP_SLUG' },
+  )
   const projectRoot = process.cwd()
   const devDir = resolve(projectRoot, '.svelte-kit/keystatic')
   const prodDir = resolve(projectRoot, '.svelte-kit/output/client/')
