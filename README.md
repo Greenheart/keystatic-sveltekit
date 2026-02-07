@@ -1,16 +1,16 @@
 # keystatic-sveltekit
 
-This project shows how to integrate [Keystatic CMS](https://keystatic.com/) with SvelteKit. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and how it works.
+Library for integrating the Git-based [Keystatic](https://keystatic.com/) CMS with SvelteKit. This allows you to serve the CMS from the same server as your main SvelteKit app. You can read the [blog post](https://samuelplumppu.se/blog/keystatic-sveltekit-markdoc) to learn more about why this is useful, and the background to this project.
 
 ```sh
 pnpm add keystatic-sveltekit
 ```
 
-## Key features
+## Library key features
 
-- This setup makes it simple to run Keystatic with the same server as SvelteKit. This improves both local development and production builds. Especially smaller projects will benefit from having less moving parts, while larger projects can separate the CMS server from the main app/website server while still benefitting from not having to install and maintain an additional metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
+- Make it easy to integrate a high-quality Git-based CMS with SvelteKit projects.
 
-- Supports deeply nested pages, giving more flexibility for how to organise posts and their URLs.
+- This library allows serving Keystatic CMS with the same server as SvelteKit. This improved both development and production builds by removing the need to install and maintain a separate metaframework just for the CMS. If you already use SvelteKit, why not use it for the CMS as well?
 
 - Supports hot reloading during development to make it simple and enjoyable to edit `keystatic.config.ts` and quickly see the results in the CMS.
 
@@ -98,7 +98,16 @@ The [Keystatic Reader API](https://keystatic.com/docs/reader-api) is a good way 
 
 ## Demo project and Markdoc integration
 
-The Git repository for `keystatic-sveltekit` also includes a demo project showcasing how to use [markdoc-svelte](https://github.com/CollierCZ/markdoc-svelte) to render rich [Markdoc](https://markdoc.dev/) content with support for embedding interactive Svelte components and other useful features.
+The Git repository for [keystatic-sveltekit](https://github.com/Greenheart/keystatic-sveltekit) also includes a demo project showing how to set up `keystatic-sveltekit` and how to use [markdoc-svelte](https://github.com/CollierCZ/markdoc-svelte) to render rich [Markdoc](https://markdoc.dev/) content with support for embedding interactive Svelte components and other useful features.
+
+### Key features
+
+- Posts can be deeply nested, giving more flexibility for how to organise posts and their URLs. A similar config could be used to create a more general `pages` content type which could enable block-based content editing.
+- Hot reloading while editing posts gives you rapid live previews. Ideal for viewing both the CMS/code editor and the live project side by side.
+- Possibility to embed interactive Svelte components in the Markdoc content, creating rich experiences. This enables flexible and powerful content blocks.
+- Markdoc content validation via schemas to catch errors early. A big advantage over a similar solution like [MDX](https://mdxjs.com/).
+
+### Explore the demo
 
 You can explore the demo by cloning the Git repo and running the following commands:
 
@@ -107,7 +116,14 @@ pnpm i
 pnpm dev
 ```
 
-Visit <http://localhost:5173> for the demo page, and <http://localhost:5173/keystatic> for the CMS.
+Then you can visit:
+
+- Demo page: <http://localhost:5173>
+- CMS: <http://localhost:5173/keystatic>
+
+Try making changes to posts and see how the live project hot reloads both for configuration changes in `keystatic.config.ts` and when editing posts.
+
+---
 
 ## How to only enable Keystatic CMS during `development`:
 
