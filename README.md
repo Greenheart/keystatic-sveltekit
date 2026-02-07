@@ -77,7 +77,7 @@ export const handle: Handle = await handleKeystatic(
 )
 ```
 
-If you use the [GitHub mode](https://keystatic.com/docs/github-mode), make sure your env variable `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` matches the actual env variable used in your project.
+If you use the [GitHub mode](https://keystatic.com/docs/github-mode), make sure your env variable `PUBLIC_KEYSTATIC_GITHUB_APP_SLUG` (which is the standard name) matches the actual env variable used in your project. The Keystatic CMS UI will guide you through setting up your GitHub app and related env variables, so you can fix this later in the setup process.
 
 However, if you only use [local mode](https://keystatic.com/docs/local-mode), you can remove the second argument and define your handle hook like this instead:
 
