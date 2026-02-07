@@ -74,7 +74,7 @@ import config from '../keystatic.config.ts'
 export const handle: Handle = await handleKeystatic({ config })
 ```
 
-You can also pass in additional configuration like environment variables, which is useful if you have nonstandard names for your variables Refer to the parameters of `handleKeystatic()` for more info.
+You can also pass in additional configuration like environment variables, which is useful if you have nonstandard names for your environment variables. Refer to the parameters of `handleKeystatic()` for more info.
 
 ---
 
@@ -92,9 +92,29 @@ There are two workarounds:
 
 Once all steps are completed, you can run `pnpm dev` and access Keystatic CMS at <http://localhost:5173/keystatic>.
 
+If you plan to use [GitHub mode](https://keystatic.com/docs/github-mode), follow the guide for further instructions on how to create and configure a GitHub app.
+
+Remember that you can configure GitHub mode for production and still use [local mode](https://keystatic.com/docs/local-mode) during development, by modifying your `keystatic.config.ts` like this:
+
+```ts
+// keystatic.config.ts
+export default config({
+  storage: import.meta.env.DEV
+    ? {
+        kind: 'local',
+      }
+    : {
+        kind: 'github',
+        repo: 'user/repo',
+      },
+})
+```
+
 ### Read content and use it in your SvelteKit project
 
 The [Keystatic Reader API](https://keystatic.com/docs/reader-api) is a good way to read your content and use it on the server side of SvelteKit.
+
+See the demo project below to see one way to implement it.
 
 ---
 
