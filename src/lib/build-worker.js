@@ -79,3 +79,9 @@ parentPort.on('message', async (task) => {
   await buildCMS()
   parentPort?.postMessage({ id: task.id, result: true })
 })
+
+/**
+ * NOTE: Why do we export the build mode from the worker module, even though it should really be in index.js?
+ * Because this ensures this internal type won't be included in the generated index.d.ts file.
+ * @typedef {'prio' | boolean} BuildMode
+ */
