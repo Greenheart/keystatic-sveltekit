@@ -1,5 +1,5 @@
 import { build } from 'rolldown'
-import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parentPort } from 'node:worker_threads'
 
@@ -32,45 +32,44 @@ function ensureGDPRCompliantFonts(code) {
  */
 async function buildCMS() {
   const htmlFilePath = resolve(devDir, 'keystatic.html')
-  await Promise.all([
-    build({
-      input: [resolve(import.meta.dirname, 'cms.jsx')],
-      write: false,
-      resolve: {
-        alias: {
-          'virtual:keystatic.config': resolve(projectRoot, 'keystatic.config.ts'),
-        },
+  await build({
+    input: [resolve(import.meta.dirname, 'cms.jsx')],
+    write: false,
+    resolve: {
+      alias: {
+        'virtual:keystatic.config': resolve(projectRoot, 'keystatic.config.ts'),
       },
-      transform: {
-        jsx: 'react-jsx',
-        target: 'es2022',
-        define: {
-          // Ensure the production bundle for React is used to improve performance.
-          'process.env.NODE_ENV': '"production"',
-        },
+    },
+    transform: {
+      jsx: 'react-jsx',
+      target: 'es2022',
+      define: {
+        // Ensure the production bundle for React is used to improve performance.
+        'process.env.NODE_ENV': '"production"',
       },
-      output: {
-        minify: true,
-        file: 'keystatic.js',
-      },
-    }).then(({ output: [rawJS] }) =>
-      writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.code), 'utf-8'),
-    ),
-    cp(resolve(import.meta.dirname, 'cms.html'), htmlFilePath),
-  ])
+    },
+    output: {
+      minify: true,
+      file: 'keystatic.js',
+    },
+  }).then(({ output: [rawJS] }) =>
+    writeFileSync(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.code), 'utf-8'),
+  )
+
+  cpSync(resolve(import.meta.dirname, 'cms.html'), htmlFilePath)
 
   // Replace dev script for production builds
   if (process.env.NODE_ENV !== 'development') {
-    const rawHTML = await readFile(htmlFilePath, 'utf-8')
-    await writeFile(
+    const rawHTML = readFileSync(htmlFilePath, 'utf-8')
+    writeFileSync(
       htmlFilePath,
       rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
       'utf-8',
     )
   }
 
-  await mkdir(prodDir, { recursive: true })
-  await cp(devDir, prodDir, { recursive: true })
+  mkdirSync(prodDir, { recursive: true })
+  cpSync(devDir, prodDir, { recursive: true })
 }
 
 if (!parentPort) throw new Error('Missing parentPort')
