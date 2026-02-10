@@ -32,6 +32,7 @@ function ensureGDPRCompliantFonts(code) {
  */
 async function buildCMS() {
   const htmlFilePath = resolve(devDir, 'keystatic.html')
+  const jsBundle = 'keystatic.js'
   await build({
     input: [resolve(import.meta.dirname, 'cms.jsx')],
     write: false,
@@ -50,26 +51,34 @@ async function buildCMS() {
     },
     output: {
       minify: true,
-      file: 'keystatic.js',
+      file: jsBundle,
     },
-  }).then(({ output: [rawJS] }) =>
-    writeFileSync(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.code), 'utf-8'),
-  )
+    plugins: [
+      {
+        name: 'output-bundle',
+        generateBundle(_output, bundle) {
+          const entry = bundle[jsBundle]
+          if (entry.type !== 'chunk') throw new Error('Unexpected output file: ' + entry.fileName)
+          writeFileSync(resolve(devDir, jsBundle), ensureGDPRCompliantFonts(entry.code), 'utf-8')
 
-  cpSync(resolve(import.meta.dirname, 'cms.html'), htmlFilePath)
+          cpSync(resolve(import.meta.dirname, 'cms.html'), htmlFilePath)
 
-  // Replace dev script for production builds
-  if (process.env.NODE_ENV !== 'development') {
-    const rawHTML = readFileSync(htmlFilePath, 'utf-8')
-    writeFileSync(
-      htmlFilePath,
-      rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
-      'utf-8',
-    )
-  }
+          // Replace dev script for production builds
+          if (process.env.NODE_ENV !== 'development') {
+            const rawHTML = readFileSync(htmlFilePath, 'utf-8')
+            writeFileSync(
+              htmlFilePath,
+              rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
+              'utf-8',
+            )
+          }
 
-  mkdirSync(prodDir, { recursive: true })
-  cpSync(devDir, prodDir, { recursive: true })
+          mkdirSync(prodDir, { recursive: true })
+          cpSync(devDir, prodDir, { recursive: true })
+        },
+      },
+    ],
+  })
 }
 
 if (!parentPort) throw new Error('Missing parentPort')
