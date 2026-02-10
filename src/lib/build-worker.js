@@ -1,4 +1,4 @@
-import { build } from 'esbuild'
+import { build } from 'rolldown'
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parentPort } from 'node:worker_threads'
@@ -34,27 +34,27 @@ async function buildCMS() {
   const htmlFilePath = resolve(devDir, 'keystatic.html')
   await Promise.all([
     build({
-      entryPoints: [resolve(import.meta.dirname, 'cms.jsx')],
-      bundle: true,
-      minify: true,
+      input: [resolve(import.meta.dirname, 'cms.jsx')],
       write: false,
-      plugins: [
-        {
-          name: 'load-keystatic-config',
-          setup(build) {
-            build.onResolve({ filter: /^virtual\:keystatic.config$/ }, () => ({
-              path: resolve(projectRoot, 'keystatic.config.ts'),
-            }))
-          },
+      resolve: {
+        alias: {
+          'virtual:keystatic.config': resolve(projectRoot, 'keystatic.config.ts'),
         },
-      ],
-      target: ['es2021'],
-      define: {
-        // Ensure the production bundle for React is used to improve performance.
-        'process.env.NODE_ENV': '"production"',
       },
-    }).then(({ outputFiles: [rawJS] }) =>
-      writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.text), 'utf-8'),
+      transform: {
+        jsx: 'react-jsx',
+        target: 'es2022',
+        define: {
+          // Ensure the production bundle for React is used to improve performance.
+          'process.env.NODE_ENV': '"production"',
+        },
+      },
+      output: {
+        minify: true,
+        file: 'keystatic.js',
+      },
+    }).then(({ output: [rawJS] }) =>
+      writeFile(resolve(devDir, 'keystatic.js'), ensureGDPRCompliantFonts(rawJS.code), 'utf-8'),
     ),
     cp(resolve(import.meta.dirname, 'cms.html'), htmlFilePath),
   ])
