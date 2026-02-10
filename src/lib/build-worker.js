@@ -89,7 +89,7 @@ parentPort.on('message', async (task) => {
 })
 
 /**
- * NOTE: Why do we export the build mode from the worker module, even though it should really be in index.js?
- * Because this ensures this internal type won't be included in the generated index.d.ts file.
+ * By defining the internal type BuildMode in this module instead of index.js,
+ * it won't be included in the generated index.d.ts file.
  * @typedef {'prio' | boolean} BuildMode
  */
