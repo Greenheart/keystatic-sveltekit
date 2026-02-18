@@ -201,7 +201,7 @@ async function buildCMS(buildMode) {
     })
   }
   // During development, re-use the same worker in a pool
-  pool ??= new (await import('./worker-pool.js')).WorkerPool(workerModulePath)
+  pool ??= new (await import(pathToFileURL('./worker-pool.js').href)).WorkerPool(workerModulePath)
   // Only keep the most recent build job if multiple changes happened rapidly
   const old = pool.taskQueue.shift()
   // Abort without reloading the CMS since no build happened
@@ -236,7 +236,9 @@ export function keystatic() {
 
       /** @type {Config} */
       const keystaticConfig = (
-        await import(/* @vite-ignore */ resolve(projectRoot, 'keystatic.config.ts'))
+        await import(
+          /* @vite-ignore */ pathToFileURL(resolve(projectRoot, 'keystatic.config.ts')).href
+        )
       ).default
 
       if (keystaticConfig.storage.kind !== 'local') {
