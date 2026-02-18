@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && pnpm prepack",
+    "build": "vite build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "prepublishOnly": "pnpm build",
