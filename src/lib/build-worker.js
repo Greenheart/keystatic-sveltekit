@@ -59,6 +59,7 @@ async function buildCMS() {
         generateBundle(_output, bundle) {
           const entry = bundle[jsBundle]
           if (entry.type !== 'chunk') throw new Error('Unexpected output file: ' + entry.fileName)
+          mkdirSync(devDir, { recursive: true })
           writeFileSync(resolve(devDir, jsBundle), ensureGDPRCompliantFonts(entry.code), 'utf-8')
 
           cpSync(resolve(import.meta.dirname, 'cms.html'), htmlFilePath)
