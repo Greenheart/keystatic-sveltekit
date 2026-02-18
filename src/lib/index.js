@@ -202,7 +202,9 @@ async function buildCMS(buildMode) {
   }
   // During development, re-use the same worker in a pool
   pool ??= new (
-    await import(pathToFileURL(resolve(import.meta.dirname, 'worker-pool.js')).href)
+    await import(
+      /* @vite-ignore */ pathToFileURL(resolve(import.meta.dirname, 'worker-pool.js')).href
+    )
   ).WorkerPool(workerModulePath)
   // Only keep the most recent build job if multiple changes happened rapidly
   const old = pool.taskQueue.shift()
