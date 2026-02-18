@@ -18,7 +18,7 @@ export class WorkerPool {
   #activeTasks = new Map()
 
   /**
-   * @param {string} workerPath
+   * @param {URL} workerPath file path URL
    * @param {number} [poolSize]
    */
   constructor(workerPath, poolSize = 1) {
