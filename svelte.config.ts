@@ -4,10 +4,18 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 import { markdocPreprocess } from 'markdoc-svelte'
 import { glob } from 'node:fs/promises'
 import { isKeystaticRoute } from './src/lib/index.js'
+import { sep, posix } from 'node:path'
 
 export async function getPrerenderEntries() {
   const posts = (await Array.fromAsync(glob('src/content/posts/**/*.{mdoc,md}'))).flatMap(
-    (file: string) => file.split('/content')[1].replace(/\.md(?:oc)/, ''),
+    (file: string) =>
+      file
+        // Ensure paths are posix `/` rather than Windows `\`
+        .replaceAll(sep, posix.sep)
+        // We only need the final part of the file path
+        .split('/content')[1]
+        // Replace the file extension to get a clean file URL
+        .replace(/\.md(?:oc)/, ''),
   )
 
   // Add loaders for more prerenderable content types here
