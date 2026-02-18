@@ -10,6 +10,7 @@ import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
 import { basename, resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
+import { pathToFileURL } from 'node:url'
 
 /**
  * Wait until a condition is true.
@@ -187,7 +188,7 @@ let pool
  * @param {BuildMode} [buildMode]
  */
 async function buildCMS(buildMode) {
-  const workerModulePath = resolve(import.meta.dirname, 'build-worker.js')
+  const workerModulePath = pathToFileURL(resolve(import.meta.dirname, 'build-worker.js'))
   // For production builds, run a single worker and close it once done
   if (buildMode === 'prio') {
     return new Promise((done) => {
@@ -200,7 +201,7 @@ async function buildCMS(buildMode) {
     })
   }
   // During development, re-use the same worker in a pool
-  pool ??= new (await import('./worker-pool.js')).WorkerPool(workerModulePath)
+  pool ??= new (await import('./worker-pool.js')).WorkerPool(workerModulePath.href)
   // Only keep the most recent build job if multiple changes happened rapidly
   const old = pool.taskQueue.shift()
   // Abort without reloading the CMS since no build happened
