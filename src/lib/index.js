@@ -7,7 +7,7 @@
 import { error } from '@sveltejs/kit'
 import { makeGenericAPIRouteHandler } from '@keystatic/core/api/generic'
 import { cp, readdir, readFile, mkdir } from 'node:fs/promises'
-import { basename, resolve } from 'node:path'
+import { basename, resolve, relative } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Worker } from 'node:worker_threads'
 import { pathToFileURL } from 'node:url'
@@ -236,7 +236,12 @@ export function keystatic() {
 
       /** @type {Config} */
       const keystaticConfig = (
-        await import(/* @vite-ignore */ resolve(projectRoot, 'keystatic.config.ts'))
+        await import(
+          /* @vite-ignore */ relative(
+            import.meta.dirname,
+            resolve(projectRoot, 'keystatic.config.ts'),
+          )
+        )
       ).default
 
       if (keystaticConfig.storage.kind !== 'local') {
