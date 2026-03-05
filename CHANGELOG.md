@@ -3,6 +3,8 @@
 ## Unreleased
 
 - feat: Update `rolldown` to `1.0.0-rc7`
+- fix: Avoid creating unnecessary wrapper object
+- fix: Remove unnecessary regex escape character
 
 ## 1.2.0 - 2026-02-18
 
