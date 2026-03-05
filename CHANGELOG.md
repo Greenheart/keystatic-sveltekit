@@ -1,5 +1,9 @@
 # Changelog for `keystatic-sveltekit`
 
+## Unreleased
+
+- feat: Update `rolldown` to `1.0.0-rc7`
+
 ## 1.2.0 - 2026-02-18
 
 - feat: Add support for Windows by converting file paths into file URLs.
