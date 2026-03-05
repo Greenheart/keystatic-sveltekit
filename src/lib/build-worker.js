@@ -69,7 +69,7 @@ async function buildCMS() {
             const rawHTML = readFileSync(htmlFilePath, 'utf-8')
             writeFileSync(
               htmlFilePath,
-              rawHTML.replace(/\ +<script id="cms-dev".*?<\/script>\n/gs, ''),
+              rawHTML.replace(/ +<script id="cms-dev".*?<\/script>\n/gs, ''),
               'utf-8',
             )
           }
