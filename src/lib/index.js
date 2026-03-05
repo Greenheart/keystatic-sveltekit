@@ -247,13 +247,11 @@ export function keystatic() {
 
       if (keystaticConfig.storage.kind !== 'local') {
         return {
-          server: {
-            // When using a Keystatic storage which uses OAuth (like `github`, `cloud`),
-            // then both the CMS frontend and the API should be served from `127.0.0.1`
-            // By configuring the Vite server host to `127.0.0.1`, we make the server accessible both via `localhost` and `127.0.0.1`.
-            // Related issue: https://github.com/Thinkmill/keystatic/issues/366
-            ...(config.server?.host ? {} : { host: '127.0.0.1' }),
-          },
+          // When using a Keystatic storage which uses OAuth (like `github`, `cloud`),
+          // then both the CMS frontend and the API should be served from `127.0.0.1`
+          // By configuring the Vite server host to `127.0.0.1`, we make the server accessible both via `localhost` and `127.0.0.1`.
+          // Related issue: https://github.com/Thinkmill/keystatic/issues/366
+          server: config.server?.host ? {} : { host: '127.0.0.1' },
         }
       }
     },
