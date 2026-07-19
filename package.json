@@ -68,14 +68,6 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
-    "patchedDependencies": {
-      "@keystatic/core": "patches/@keystatic__core.patch"
-    }
-  },
   "prettier": {
     "semi": false,
     "singleQuote": true,
