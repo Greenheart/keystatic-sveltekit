@@ -25,33 +25,33 @@
     "lint": "prettier --check ."
   },
   "dependencies": {
-    "rolldown": "1.0.0-rc.7"
+    "rolldown": "^1.2.0"
   },
   "peerDependencies": {
     "@keystatic/core": "^0.5.48",
-    "@sveltejs/kit": "^2.50.2",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "vite": "^7.0.0"
+    "@sveltejs/kit": "^2.70.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "vite": "^8.0.0"
   },
   "devDependencies": {
     "@keystatic/core": "^0.5.48",
     "@sveltejs/adapter-auto": "^7.0.1",
-    "@sveltejs/kit": "^2.53.4",
-    "@sveltejs/package": "^2.5.7",
-    "@sveltejs/vite-plugin-svelte": "^6.2.4",
-    "@types/node": "^25.3.3",
-    "@types/react": "^19.2.14",
+    "@sveltejs/kit": "^2.70.1",
+    "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "markdoc-svelte": "^4.1.0",
-    "prettier": "^3.8.1",
-    "prettier-plugin-svelte": "^3.5.1",
-    "publint": "^0.3.18",
-    "svelte": "^5.53.7",
-    "svelte-check": "^4.4.4",
+    "markdoc-svelte": "^4.2.0",
+    "prettier": "^3.9.5",
+    "prettier-plugin-svelte": "^4.1.1",
+    "publint": "^0.3.21",
+    "svelte": "^5.56.6",
+    "svelte-check": "^4.7.3",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "zod": "^4.3.6"
+    "vite": "^8.0.0",
+    "zod": "^4.4.3"
   },
   "exports": {
     ".": {
