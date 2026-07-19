@@ -159,7 +159,7 @@ export default defineConfig({
 // src/hooks.server.ts
 import { type Handle } from '@sveltejs/kit'
 import { sequence } from '@sveltejs/kit/hooks'
-import { dev } from '$app/environment'
+import { dev } from '$app/env'
 
 // Add your other hooks here
 const hooks: Handle[] = []

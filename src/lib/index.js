@@ -106,7 +106,7 @@ export async function handleKeystatic(apiConfig) {
     })
 
     return async (/** @type RequestEvent */ event) => {
-      const { building } = await import('$app/environment')
+      const { building } = await import('$app/env')
       if (building) {
         // Throwing an HTTP error to trigger the `handleHttpError()` in `svelte.config.ts`
         // where we can prevent prerendering for the CMS
