@@ -1,5 +1,2 @@
 allowBuilds:
   esbuild: true
-
-patchedDependencies:
-  '@keystatic/core': 'patches/@keystatic__core.patch'
