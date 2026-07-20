@@ -1,5 +1,10 @@
 # Changelog for `keystatic-sveltekit`
 
+## 1.3.1 - 2026-07-20
+
+- fix: Support environment loading both for SvelteKit v2 and v3.
+- chore: Update dev project in preparation for SvelteKit explicit environment variables becoming the default.
+
 ## 1.3.0 - 2026-07-20
 
 - feat: Add `vite@^8.0.0` as a possible peerDependency.
