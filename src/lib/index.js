@@ -59,24 +59,25 @@ function tryOrUndefined(fn) {
 export async function handleKeystatic(apiConfig) {
   // Only call SvelteKit env variable loading at runtime
   // to ensure the library can be built with Vite
-  const { env } = await import('$env/dynamic/private')
+  const { KEYSTATIC_GITHUB_CLIENT_ID, KEYSTATIC_GITHUB_CLIENT_SECRET, KEYSTATIC_SECRET } =
+    await import('$app/env/private')
   const handleAPI = makeGenericAPIRouteHandler(
     {
       ...apiConfig,
       clientId:
         apiConfig.clientId ??
         tryOrUndefined(() => {
-          return env.KEYSTATIC_GITHUB_CLIENT_ID
+          return KEYSTATIC_GITHUB_CLIENT_ID
         }),
       clientSecret:
         apiConfig.clientSecret ??
         tryOrUndefined(() => {
-          return env.KEYSTATIC_GITHUB_CLIENT_SECRET
+          return KEYSTATIC_GITHUB_CLIENT_SECRET
         }),
       secret:
         apiConfig.secret ??
         tryOrUndefined(() => {
-          return env.KEYSTATIC_SECRET
+          return KEYSTATIC_SECRET
         }),
     },
     { slugEnvName: 'PUBLIC_KEYSTATIC_GITHUB_APP_SLUG' },

@@ -37,6 +37,9 @@ const config = {
     }),
   ],
   kit: {
+    experimental: {
+      explicitEnvironmentVariables: true,
+    },
     adapter: adapter(),
     prerender: {
       entries: ['*', await getPrerenderEntries()].flat(),
