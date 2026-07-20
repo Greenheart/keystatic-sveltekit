@@ -57,10 +57,17 @@ function tryOrUndefined(fn) {
  * @returns {Promise<Handle>}
  */
 export async function handleKeystatic(apiConfig) {
-  // Only call SvelteKit env variable loading at runtime
+  // 1) Only call SvelteKit env variable loading at runtime
   // to ensure the library can be built with Vite
+  // 2) We also need to import env variables from different locations, which can varies based on SvelteKit version and configuration.
   const { KEYSTATIC_GITHUB_CLIENT_ID, KEYSTATIC_GITHUB_CLIENT_SECRET, KEYSTATIC_SECRET } =
-    await import('$app/env/private')
+    // This is the SvelteKit 3 expected import
+    (await tryOrUndefined(() => import('$app/env/private'))) ??
+    // @ts-expect-error This SvelteKit import is only available for SvelteKit 2 and when explicitEnvironmentVariables is disabled.
+    (await tryOrUndefined(() => import('$env/dynamic/private'))) ??
+    (() => {
+      throw new Error('Unable to load SvelteKit environment')
+    })()
   const handleAPI = makeGenericAPIRouteHandler(
     {
       ...apiConfig,
@@ -107,7 +114,12 @@ export async function handleKeystatic(apiConfig) {
     })
 
     return async (/** @type RequestEvent */ event) => {
-      const { building } = await import('$app/env')
+      const { building } =
+        (await tryOrUndefined(() => import('$app/env'))) ??
+        (await tryOrUndefined(() => import('$app/environment'))) ??
+        (() => {
+          throw new Error('Unable to load SvelteKit environment')
+        })()
       if (building) {
         // Throwing an HTTP error to trigger the `handleHttpError()` in `svelte.config.ts`
         // where we can prevent prerendering for the CMS
