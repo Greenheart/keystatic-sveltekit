@@ -1,8 +1,10 @@
 # Changelog for `keystatic-sveltekit`
 
-## Unreleased
+## 1.3.0 - 2026-07-20
 
-- feat: Update `rolldown` to `1.0.0-rc7`
+- feat: Add `vite@^8.0.0` as a possible peerDependency.
+- feat: Update to `@keystatic/core@0.5.51` which includes the upstreamed patch to prevent loopback (127.0.0.1) redirects for the Keystatic `local` mode. More details in the [PR](https://github.com/Thinkmill/keystatic/pull/1465).
+- feat: Update to `rolldown@1.2.0`
 - fix: Avoid creating unnecessary wrapper object
 - fix: Remove unnecessary regex escape character
 
